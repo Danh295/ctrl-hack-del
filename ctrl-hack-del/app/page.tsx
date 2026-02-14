@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
-import { Send, Mic, Cpu, Volume2, VolumeX } from "lucide-react";
+import { Send, Mic, Cpu, Volume2, VolumeX, Heart } from "lucide-react";
 
 // Import Canvas with NO SSR
 const ModelCanvas = dynamic(() => import("@/components/ModelCanvas"), {
@@ -15,6 +15,17 @@ interface Message {
 }
 
 export default function Home() {
+  // Affection system constants
+  const AFFECTION_BASE_CHANGE = 5; // Base amount for changes
+  const CAFE_DATE_THRESHOLD = 50; // Threshold to unlock cafe date
+  const EMOTION_MULTIPLIERS: Record<string, number> = {
+    "Smile": 3,      // Happy: +3x
+    "Surprised": 2,  // Surprised: +2x
+    "Normal": 0,     // Normal: no change
+    "Sad": -0.5,     // Sad: -0.5x
+    "Angry": -3      // Angry: -3x
+  };
+
   const [input, setInput] = useState("");
   const [chatHistory, setChatHistory] = useState<Message[]>([]);
   const [currentEmotion, setCurrentEmotion] = useState("Normal");
@@ -24,11 +35,12 @@ export default function Home() {
   const [isCafeDate, setIsCafeDate] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+  const [affection, setAffection] = useState(40); // Affection level (0-100)
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Initial loading screen
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
+    const timer = setTimeout(() => setIsLoading(false), 1500);
     return () => clearTimeout(timer);
   }, []);
 
@@ -36,7 +48,7 @@ export default function Home() {
   useEffect(() => {
     if (isLoading) return; // Skip on initial load
     setIsLoading(true);
-    const timer = setTimeout(() => setIsLoading(false), 500);
+    const timer = setTimeout(() => setIsLoading(false), 1500);
     return () => clearTimeout(timer);
   }, [isCafeDate]);
 
@@ -144,6 +156,13 @@ export default function Home() {
       setChatHistory((prev) => [...prev, { role: "ai", text: replyText, emotion: expression }]);
       setCurrentEmotion(expression);
       
+      // Update affection based on emotion
+      const multiplier = EMOTION_MULTIPLIERS[expression] ?? 0;
+      if (multiplier !== 0) {
+        const change = AFFECTION_BASE_CHANGE * multiplier;
+        setAffection((prev) => Math.max(0, Math.min(100, prev + change)));
+      }
+      
       // Play audio if available and enabled
       if (audioBase64 && isAudioEnabled) {
         console.log("🎵 Audio data received, attempting playback...");
@@ -168,7 +187,7 @@ export default function Home() {
       {/* Loading Screen */}
       {isLoading && (
         <div className="loading-screen">
-          <p className="loading-text">loading simulation</p>
+          <p className="loading-text">travelling...</p>
         </div>
       )}
       
@@ -234,6 +253,22 @@ export default function Home() {
         )}
       </section>
 
+      {/* AFFECTION METER */}
+      <div className="affection-meter-container">
+        <div className="affection-meter-label">
+          <Heart size={14} fill="var(--soft-berry)" color="var(--soft-berry)" />
+          <span>lvl</span>
+        </div>
+        <div className="affection-meter-bar">
+          <div 
+            className="affection-meter-fill"
+            style={{ height: `${affection}%` }}
+          >
+            <div className="affection-meter-shine" />
+          </div>
+        </div>
+      </div>
+
       {/* RIGHT COLUMN: CHAT INTERFACE (35% Width) */}
       <section className="chat-section">
         
@@ -244,10 +279,11 @@ export default function Home() {
             <h1 className="chat-title">Arisa (your girlfriend)</h1>
           </div>
           <button 
-            className="cafe-date-btn"
-            onClick={() => setIsCafeDate(!isCafeDate)}
+            className={`cafe-date-btn ${affection < CAFE_DATE_THRESHOLD && !isCafeDate ? 'disabled' : ''}`}
+            onClick={() => affection >= CAFE_DATE_THRESHOLD || isCafeDate ? setIsCafeDate(!isCafeDate) : null}
+            title={affection < CAFE_DATE_THRESHOLD && !isCafeDate ? `Affection must be ${CAFE_DATE_THRESHOLD}+ to unlock` : ''}
           >
-            {isCafeDate ? 'Back Home' : 'Cafe Date'}
+            {isCafeDate ? 'Back Home' : affection >= CAFE_DATE_THRESHOLD ? 'Cafe Date' : `🔒 ${CAFE_DATE_THRESHOLD}%`}
           </button>
           <button 
             className="audio-toggle-btn"
