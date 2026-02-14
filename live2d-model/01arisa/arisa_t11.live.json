@@ -1,0 +1,982 @@
+{
+    "major": 3,
+    "minor": 0,
+    "model": {
+        "description": "イラストレーターのかにビーム氏描きおろしキャラクターのモデルです。\n\nSNSへの投稿や動画配信に使用することができます。\n「nizima LIVEソフトウェア使用許諾契約書」および「nizima LIVEサンプルモデル利用条件」の詳細をご確認の上、ご使用ください。\n\nYou can use it for posting to social media or streaming videos.\nPlease read the details in nizima LIVE’s [Software License Agreement] and [Terms of Use for Sample Models].",
+        "icon": "",
+        "name": "01柊アリサ"
+    },
+    "parameter": {
+        "automationConnections": [
+            {
+                "controlId": "ParamBreath",
+                "cycle": 3245,
+                "max": 1,
+                "min": 0,
+                "offset": 0,
+                "peak": 0.5,
+                "wave": true
+            }
+        ],
+        "trackingConnections": [
+            {
+                "controlId": "ParamAngleX",
+                "curve": {
+                    "keyframes": [
+                        {
+                            "anchor": {
+                                "x": 0,
+                                "y": 0
+                            },
+                            "nextControl": {
+                                "x": 0.30000001192092896,
+                                "y": 0
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 1,
+                                "y": 1
+                            },
+                            "previousControl": {
+                                "x": 0.699999988079071,
+                                "y": 1
+                            },
+                            "type": 0
+                        }
+                    ],
+                    "max": 30,
+                    "min": -30
+                },
+                "invert": false,
+                "scale": 1,
+                "smoothLevel": 0,
+                "sourceId": "Yaw",
+                "weight": 0.9046052694320679,
+                "weightForceZero": false
+            },
+            {
+                "controlId": "ParamAngleY",
+                "curve": {
+                    "keyframes": [
+                        {
+                            "anchor": {
+                                "x": 0,
+                                "y": 0
+                            },
+                            "nextControl": {
+                                "x": 0.30000001192092896,
+                                "y": 0
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 1,
+                                "y": 1
+                            },
+                            "previousControl": {
+                                "x": 0.699999988079071,
+                                "y": 1
+                            },
+                            "type": 0
+                        }
+                    ],
+                    "max": 30,
+                    "min": -30
+                },
+                "invert": false,
+                "scale": 1,
+                "smoothLevel": 0,
+                "sourceId": "Pitch",
+                "weight": 0.9013158082962036,
+                "weightForceZero": false
+            },
+            {
+                "controlId": "ParamAngleZ",
+                "curve": {
+                    "keyframes": [
+                        {
+                            "anchor": {
+                                "x": 0,
+                                "y": 0
+                            },
+                            "nextControl": {
+                                "x": 0.30000001192092896,
+                                "y": 0
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 1,
+                                "y": 1
+                            },
+                            "previousControl": {
+                                "x": 0.699999988079071,
+                                "y": 1
+                            },
+                            "type": 0
+                        }
+                    ],
+                    "max": 30,
+                    "min": -30
+                },
+                "invert": false,
+                "scale": 1,
+                "smoothLevel": 0,
+                "sourceId": "Roll",
+                "weight": 0.9013158082962036,
+                "weightForceZero": false
+            },
+            {
+                "controlId": "ParamBodyAngleX",
+                "curve": {
+                    "keyframes": [
+                        {
+                            "anchor": {
+                                "x": 0,
+                                "y": 0
+                            },
+                            "nextControl": {
+                                "x": 0.30000001192092896,
+                                "y": 0
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 1,
+                                "y": 1
+                            },
+                            "previousControl": {
+                                "x": 0.699999988079071,
+                                "y": 1
+                            },
+                            "type": 0
+                        }
+                    ],
+                    "max": 30,
+                    "min": -30
+                },
+                "invert": false,
+                "scale": 1,
+                "smoothLevel": 0,
+                "sourceId": "Yaw",
+                "weight": 0.7993420958518982,
+                "weightForceZero": false
+            },
+            {
+                "controlId": "ParamBodyAngleY",
+                "curve": {
+                    "keyframes": [
+                        {
+                            "anchor": {
+                                "x": 0,
+                                "y": 0
+                            },
+                            "nextControl": {
+                                "x": 0.30000001192092896,
+                                "y": 0
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 1,
+                                "y": 1
+                            },
+                            "previousControl": {
+                                "x": 0.699999988079071,
+                                "y": 1
+                            },
+                            "type": 0
+                        }
+                    ],
+                    "max": 30,
+                    "min": -30
+                },
+                "invert": false,
+                "scale": 1,
+                "smoothLevel": 0,
+                "sourceId": "Pitch",
+                "weight": 0.7960526347160339,
+                "weightForceZero": false
+            },
+            {
+                "controlId": "ParamBodyAngleZ",
+                "curve": {
+                    "keyframes": [
+                        {
+                            "anchor": {
+                                "x": 0,
+                                "y": 0
+                            },
+                            "nextControl": {
+                                "x": 0.30000001192092896,
+                                "y": 0
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 1,
+                                "y": 1
+                            },
+                            "previousControl": {
+                                "x": 0.699999988079071,
+                                "y": 1
+                            },
+                            "type": 0
+                        }
+                    ],
+                    "max": 30,
+                    "min": -30
+                },
+                "invert": false,
+                "scale": 1,
+                "smoothLevel": 0,
+                "sourceId": "Roll",
+                "weight": 0.7960526347160339,
+                "weightForceZero": false
+            },
+            {
+                "controlId": "ParamEyeLOpen",
+                "curve": {
+                    "keyframes": [
+                        {
+                            "anchor": {
+                                "x": 0,
+                                "y": 0
+                            },
+                            "nextControl": {
+                                "x": 0.30000001192092896,
+                                "y": 0
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 0.15000000596046448,
+                                "y": 0
+                            },
+                            "nextControl": {
+                                "x": 0.18203122913837433,
+                                "y": 0
+                            },
+                            "previousControl": {
+                                "x": 0,
+                                "y": 0
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 0.30000001192092896,
+                                "y": 0.8333333134651184
+                            },
+                            "nextControl": {
+                                "x": 1,
+                                "y": 0.8333333134651184
+                            },
+                            "previousControl": {
+                                "x": 0.7242189645767212,
+                                "y": 0.8190103769302368
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 0.557812511920929,
+                                "y": 0.8333333134651184
+                            },
+                            "nextControl": {
+                                "x": 1,
+                                "y": 0.8046875
+                            },
+                            "previousControl": {
+                                "x": 0.7320314049720764,
+                                "y": 0.84765625
+                            },
+                            "type": 4
+                        },
+                        {
+                            "anchor": {
+                                "x": 0.6000000238418579,
+                                "y": 1
+                            },
+                            "nextControl": {
+                                "x": 0.30000001192092896,
+                                "y": 1
+                            },
+                            "previousControl": {
+                                "x": 1,
+                                "y": 0.93359375
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 1,
+                                "y": 1
+                            },
+                            "previousControl": {
+                                "x": 0.699999988079071,
+                                "y": 1
+                            },
+                            "type": 0
+                        }
+                    ],
+                    "max": 2,
+                    "min": 0
+                },
+                "invert": false,
+                "scale": 1,
+                "smoothLevel": 0,
+                "sourceId": "EyeOpenLeft",
+                "weight": 0.800000011920929,
+                "weightForceZero": true
+            },
+            {
+                "controlId": "ParamEyeROpen",
+                "curve": {
+                    "keyframes": [
+                        {
+                            "anchor": {
+                                "x": 0,
+                                "y": 0
+                            },
+                            "nextControl": {
+                                "x": 0.30000001192092896,
+                                "y": 0
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 0.15000000596046448,
+                                "y": 0
+                            },
+                            "nextControl": {
+                                "x": 0.18203122913837433,
+                                "y": 0
+                            },
+                            "previousControl": {
+                                "x": 0,
+                                "y": 0
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 0.30000001192092896,
+                                "y": 0.8333333134651184
+                            },
+                            "nextControl": {
+                                "x": 1,
+                                "y": 0.8333333134651184
+                            },
+                            "previousControl": {
+                                "x": 0.7242189645767212,
+                                "y": 0.8190103769302368
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 0.557812511920929,
+                                "y": 0.8333333134651184
+                            },
+                            "nextControl": {
+                                "x": 1,
+                                "y": 0.8046875
+                            },
+                            "previousControl": {
+                                "x": 0.7320314049720764,
+                                "y": 0.84765625
+                            },
+                            "type": 4
+                        },
+                        {
+                            "anchor": {
+                                "x": 0.6000000238418579,
+                                "y": 1
+                            },
+                            "nextControl": {
+                                "x": 0.30000001192092896,
+                                "y": 1
+                            },
+                            "previousControl": {
+                                "x": 1,
+                                "y": 0.93359375
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 1,
+                                "y": 1
+                            },
+                            "previousControl": {
+                                "x": 0.699999988079071,
+                                "y": 1
+                            },
+                            "type": 0
+                        }
+                    ],
+                    "max": 2,
+                    "min": 0
+                },
+                "invert": false,
+                "scale": 1,
+                "smoothLevel": 0,
+                "sourceId": "EyeOpenRight",
+                "weight": 0.800000011920929,
+                "weightForceZero": true
+            },
+            {
+                "controlId": "ParamEyeBallX",
+                "curve": {
+                    "keyframes": [
+                        {
+                            "anchor": {
+                                "x": 0,
+                                "y": 0
+                            },
+                            "nextControl": {
+                                "x": 0.30000001192092896,
+                                "y": 0
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 1,
+                                "y": 1
+                            },
+                            "previousControl": {
+                                "x": 0.699999988079071,
+                                "y": 1
+                            },
+                            "type": 0
+                        }
+                    ],
+                    "max": 1,
+                    "min": -1
+                },
+                "invert": false,
+                "scale": 1,
+                "smoothLevel": 0,
+                "sourceId": "EyeLookX",
+                "weight": 0.5,
+                "weightForceZero": false
+            },
+            {
+                "controlId": "ParamEyeBallY",
+                "curve": {
+                    "keyframes": [
+                        {
+                            "anchor": {
+                                "x": 0,
+                                "y": 0
+                            },
+                            "nextControl": {
+                                "x": 0.30000001192092896,
+                                "y": 0
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 1,
+                                "y": 1
+                            },
+                            "previousControl": {
+                                "x": 0.699999988079071,
+                                "y": 1
+                            },
+                            "type": 0
+                        }
+                    ],
+                    "max": 1,
+                    "min": -1
+                },
+                "invert": false,
+                "scale": 1,
+                "smoothLevel": 0,
+                "sourceId": "EyeLookY",
+                "weight": 0.5,
+                "weightForceZero": false
+            },
+            {
+                "controlId": "ParamMouthOpenY",
+                "curve": {
+                    "keyframes": [
+                        {
+                            "anchor": {
+                                "x": 0,
+                                "y": 0
+                            },
+                            "nextControl": {
+                                "x": 0.30000001192092896,
+                                "y": 0
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 0.25,
+                                "y": 0
+                            },
+                            "nextControl": {
+                                "x": 0.3617183268070221,
+                                "y": 0
+                            },
+                            "previousControl": {
+                                "x": 0.16171875596046448,
+                                "y": 0
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 0.625,
+                                "y": 1
+                            },
+                            "nextControl": {
+                                "x": 0.9242197871208191,
+                                "y": 1
+                            },
+                            "previousControl": {
+                                "x": 0.7242185473442078,
+                                "y": 1
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 1,
+                                "y": 1
+                            },
+                            "previousControl": {
+                                "x": 0.699999988079071,
+                                "y": 1
+                            },
+                            "type": 0
+                        }
+                    ],
+                    "max": 1,
+                    "min": 0
+                },
+                "invert": false,
+                "scale": 1.5,
+                "smoothLevel": 0,
+                "sourceId": "MouthOpen",
+                "weight": 1,
+                "weightForceZero": true
+            },
+            {
+                "controlId": "ParamMouthForm",
+                "curve": {
+                    "keyframes": [
+                        {
+                            "anchor": {
+                                "x": 0,
+                                "y": 0
+                            },
+                            "nextControl": {
+                                "x": 0.5,
+                                "y": 0
+                            },
+                            "type": 4
+                        },
+                        {
+                            "anchor": {
+                                "x": 0.44140625,
+                                "y": 1
+                            },
+                            "nextControl": {
+                                "x": 0.6117190718650818,
+                                "y": 1
+                            },
+                            "previousControl": {
+                                "x": 0.828125,
+                                "y": 0.5234375
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 1,
+                                "y": 1
+                            },
+                            "previousControl": {
+                                "x": 0.699999988079071,
+                                "y": 1
+                            },
+                            "type": 0
+                        }
+                    ],
+                    "max": 1,
+                    "min": -1
+                },
+                "invert": false,
+                "scale": 1,
+                "smoothLevel": 0,
+                "sourceId": "MouthSpread",
+                "weight": 0.800000011920929,
+                "weightForceZero": false
+            },
+            {
+                "controlId": "ParamEyeLSmile",
+                "curve": {
+                    "keyframes": [
+                        {
+                            "anchor": {
+                                "x": 0,
+                                "y": 0
+                            },
+                            "nextControl": {
+                                "x": 0.30000001192092896,
+                                "y": 0
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 0.5,
+                                "y": 0
+                            },
+                            "nextControl": {
+                                "x": 0.30000001192092896,
+                                "y": 0
+                            },
+                            "previousControl": {
+                                "x": 0.699999988079071,
+                                "y": 0
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 0.625,
+                                "y": 0.5
+                            },
+                            "nextControl": {
+                                "x": 0.4203124940395355,
+                                "y": 0.5
+                            },
+                            "previousControl": {
+                                "x": 0.22031250596046448,
+                                "y": 0.5
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 0.875,
+                                "y": 0.5
+                            },
+                            "nextControl": {
+                                "x": 1,
+                                "y": 0.5
+                            },
+                            "previousControl": {
+                                "x": 0.8609421253204346,
+                                "y": 0.5
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 1,
+                                "y": 1
+                            },
+                            "previousControl": {
+                                "x": 0.699999988079071,
+                                "y": 1
+                            },
+                            "type": 0
+                        }
+                    ],
+                    "max": 1,
+                    "min": -1
+                },
+                "invert": false,
+                "scale": 1,
+                "smoothLevel": 0,
+                "sourceId": "MouthSpread",
+                "weight": 0.5,
+                "weightForceZero": false
+            },
+            {
+                "controlId": "ParamEyeRSmile",
+                "curve": {
+                    "keyframes": [
+                        {
+                            "anchor": {
+                                "x": 0,
+                                "y": 0
+                            },
+                            "nextControl": {
+                                "x": 0.30000001192092896,
+                                "y": 0
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 0.5,
+                                "y": 0
+                            },
+                            "nextControl": {
+                                "x": 0.30000001192092896,
+                                "y": 0
+                            },
+                            "previousControl": {
+                                "x": 0.699999988079071,
+                                "y": 0
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 0.625,
+                                "y": 0.5
+                            },
+                            "nextControl": {
+                                "x": 0.4203124940395355,
+                                "y": 0.5
+                            },
+                            "previousControl": {
+                                "x": 0.22031250596046448,
+                                "y": 0.5
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 0.875,
+                                "y": 0.5
+                            },
+                            "nextControl": {
+                                "x": 1,
+                                "y": 0.5
+                            },
+                            "previousControl": {
+                                "x": 0.8609421253204346,
+                                "y": 0.5
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 1,
+                                "y": 1
+                            },
+                            "previousControl": {
+                                "x": 0.699999988079071,
+                                "y": 1
+                            },
+                            "type": 0
+                        }
+                    ],
+                    "max": 1,
+                    "min": -1
+                },
+                "invert": false,
+                "scale": 1,
+                "smoothLevel": 0,
+                "sourceId": "MouthSpread",
+                "weight": 0.5,
+                "weightForceZero": false
+            },
+            {
+                "controlId": "ParamBrowRForm",
+                "curve": {
+                    "keyframes": [
+                        {
+                            "anchor": {
+                                "x": 0,
+                                "y": 0
+                            },
+                            "nextControl": {
+                                "x": 0.30000001192092896,
+                                "y": 0
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 1,
+                                "y": 1
+                            },
+                            "previousControl": {
+                                "x": 0.699999988079071,
+                                "y": 1
+                            },
+                            "type": 0
+                        }
+                    ],
+                    "max": 1,
+                    "min": -1
+                },
+                "invert": false,
+                "scale": 1,
+                "smoothLevel": 5,
+                "sourceId": "BrowYLeft",
+                "weight": 0.800000011920929,
+                "weightForceZero": false
+            },
+            {
+                "controlId": "ParamBrowLForm",
+                "curve": {
+                    "keyframes": [
+                        {
+                            "anchor": {
+                                "x": 0,
+                                "y": 0
+                            },
+                            "nextControl": {
+                                "x": 0.30000001192092896,
+                                "y": 0
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 1,
+                                "y": 1
+                            },
+                            "previousControl": {
+                                "x": 0.699999988079071,
+                                "y": 1
+                            },
+                            "type": 0
+                        }
+                    ],
+                    "max": 1,
+                    "min": -1
+                },
+                "invert": false,
+                "scale": 1,
+                "smoothLevel": 5,
+                "sourceId": "BrowYLeft",
+                "weight": 0.800000011920929,
+                "weightForceZero": false
+            },
+            {
+                "controlId": "<X>",
+                "curve": {
+                    "keyframes": [
+                        {
+                            "anchor": {
+                                "x": 0,
+                                "y": 0
+                            },
+                            "nextControl": {
+                                "x": 0.30000001192092896,
+                                "y": 0
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 1,
+                                "y": 1
+                            },
+                            "previousControl": {
+                                "x": 0.699999988079071,
+                                "y": 1
+                            },
+                            "type": 0
+                        }
+                    ],
+                    "max": 1,
+                    "min": -1
+                },
+                "invert": false,
+                "scale": 0,
+                "smoothLevel": 5,
+                "sourceId": "PositionX",
+                "weight": 0.20000000298023224,
+                "weightForceZero": false
+            },
+            {
+                "controlId": "<Y>",
+                "curve": {
+                    "keyframes": [
+                        {
+                            "anchor": {
+                                "x": 0,
+                                "y": 0
+                            },
+                            "nextControl": {
+                                "x": 0.30000001192092896,
+                                "y": 0
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 1,
+                                "y": 1
+                            },
+                            "previousControl": {
+                                "x": 0.699999988079071,
+                                "y": 1
+                            },
+                            "type": 0
+                        }
+                    ],
+                    "max": 1,
+                    "min": -1
+                },
+                "invert": false,
+                "scale": 0,
+                "smoothLevel": 5,
+                "sourceId": "PositionY",
+                "weight": 0.20000000298023224,
+                "weightForceZero": false
+            },
+            {
+                "controlId": "<Z>",
+                "curve": {
+                    "keyframes": [
+                        {
+                            "anchor": {
+                                "x": 0,
+                                "y": 0
+                            },
+                            "nextControl": {
+                                "x": 0.30000001192092896,
+                                "y": 0
+                            },
+                            "type": 1
+                        },
+                        {
+                            "anchor": {
+                                "x": 1,
+                                "y": 1
+                            },
+                            "previousControl": {
+                                "x": 0.699999988079071,
+                                "y": 1
+                            },
+                            "type": 0
+                        }
+                    ],
+                    "max": 1,
+                    "min": -1
+                },
+                "invert": false,
+                "scale": 0,
+                "smoothLevel": 5,
+                "sourceId": "PositionZ",
+                "weight": 0.10000000149011612,
+                "weightForceZero": false
+            }
+        ]
+    }
+}

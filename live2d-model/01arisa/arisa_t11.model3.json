@@ -1,0 +1,73 @@
+{
+	"Version": 3,
+	"FileReferences": {
+		"Moc": "arisa_t11.moc3",
+		"Textures": [
+			"arisa_t11.4096/texture_00.png"
+		],
+		"Physics": "arisa_t11.physics3.json",
+		"DisplayInfo": "arisa_t11.cdi3.json",
+		"Expressions": [
+			{
+				"Name": "Angry",
+				"File": "expressions/Angry.exp3.json"
+			},
+			{
+				"Name": "Normal",
+				"File": "expressions/Normal.exp3.json"
+			},
+			{
+				"Name": "Sad",
+				"File": "expressions/Sad.exp3.json"
+			},
+			{
+				"Name": "Smile",
+				"File": "expressions/Smile.exp3.json"
+			},
+			{
+				"Name": "Surprised",
+				"File": "expressions/Surprised.exp3.json"
+			},
+			{
+				"Name": "pose1",
+				"File": "expressions/pose1.exp3.json"
+			},
+			{
+				"Name": "pose2",
+				"File": "expressions/pose2.exp3.json"
+			},
+			{
+				"Name": "pose3",
+				"File": "expressions/pose3.exp3.json"
+			}
+		],
+		"Motions": {
+			"Idle": [
+				{
+					"File": "mtn/Idle.motion3.json",
+					"FadeInTime": 0,
+					"FadeOutTime": 0
+				}
+			],
+			"": [
+				{
+					"File": "mtn/Tap@body.motion3.json",
+					"FadeInTime": 0.8
+				}
+			]
+		}
+	},
+	"Groups": [
+		{
+			"Target": "Parameter",
+			"Name": "EyeBlink",
+			"Ids": []
+		},
+		{
+			"Target": "Parameter",
+			"Name": "LipSync",
+			"Ids": []
+		}
+	],
+	"HitAreas": []
+}
