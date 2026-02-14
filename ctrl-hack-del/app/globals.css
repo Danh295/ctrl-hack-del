@@ -350,6 +350,29 @@ body {
   transform: translateY(0);
 }
 
+/* Audio Toggle Button */
+.audio-toggle-btn {
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--light-mauve);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--warm-plum);
+}
+
+.audio-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: var(--dusty-pink);
+}
+
+.audio-toggle-btn:active {
+  transform: scale(0.95);
+}
+
 .empty-chat p {
   line-height: 1.625;
 }

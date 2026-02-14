@@ -2,14 +2,24 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-### Gemini API Key
+### API Keys Setup
 
-Create a local env file and add your API key:
+Create a local env file and add your API keys:
 
 1) Copy the example file:
 	- `.env.local.example` → `.env.local`
-2) Set the value:
-	- `GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE`
+2) Set the required values:
+	```
+	GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE
+	ELEVENLABS_API_KEY=YOUR_ELEVENLABS_API_KEY_HERE
+	```
+3) (Optional) Customize the voice:
+	```
+	ELEVENLABS_VOICE_ID=YOUR_VOICE_ID_HERE
+	```
+	If not set, defaults to Rachel (21m00Tcm4TlvDq8ikWAM). Find voice IDs at [ElevenLabs Voice Library](https://elevenlabs.io/voice-library).
+
+**Note:** The chatbot will work without ElevenLabs API key, but text-to-speech will be disabled.
 
 First, run the development server:
 

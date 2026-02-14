@@ -1,7 +1,7 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
-import { Send, Mic, Cpu } from "lucide-react";
+import { Send, Mic, Cpu, Volume2, VolumeX } from "lucide-react";
 
 // Import Canvas with NO SSR
 const ModelCanvas = dynamic(() => import("@/components/ModelCanvas"), {
@@ -23,6 +23,8 @@ export default function Home() {
   const [timeOfDay, setTimeOfDay] = useState("afternoon");
   const [isCafeDate, setIsCafeDate] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Initial loading screen
   useEffect(() => {
@@ -71,6 +73,38 @@ export default function Home() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
+  const playAudio = (base64Audio: string) => {
+    try {
+      console.log("🔊 Attempting to play audio...");
+      
+      // Stop current audio if playing
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+
+      // Create new audio element
+      const audio = new Audio(`data:audio/mpeg;base64,${base64Audio}`);
+      audio.volume = 1.0; // Set to maximum volume
+      audioRef.current = audio;
+      
+      audio.addEventListener('loadeddata', () => {
+        console.log("✅ Audio loaded successfully");
+      });
+      
+      audio.addEventListener('playing', () => {
+        console.log("▶️ Audio is playing");
+      });
+      
+      audio.play().catch(err => {
+        console.error("❌ Audio playback failed:", err);
+        alert("Audio playback failed. Please click anywhere on the page first to enable audio.");
+      });
+    } catch (error) {
+      console.error("❌ Audio creation failed:", error);
+    }
+  };
+
   const handleSend = async () => {
     if (!input.trim() || isThinking) return;
 
@@ -99,8 +133,24 @@ export default function Home() {
 
       const replyText = data?.reply || "(No response)";
       const expression = data?.expression || "Normal";
+      const audioBase64 = data?.audio;
+      
+      console.log("📝 Response received:", { 
+        hasText: !!replyText, 
+        hasAudio: !!audioBase64,
+        audioEnabled: isAudioEnabled 
+      });
+      
       setChatHistory((prev) => [...prev, { role: "ai", text: replyText, emotion: expression }]);
       setCurrentEmotion(expression);
+      
+      // Play audio if available and enabled
+      if (audioBase64 && isAudioEnabled) {
+        console.log("🎵 Audio data received, attempting playback...");
+        playAudio(audioBase64);
+      } else if (!audioBase64) {
+        console.warn("⚠️ No audio data in response. Check if ELEVENLABS_API_KEY is set in .env.local");
+      }
     } catch (error) {
       console.error(error);
       setChatHistory((prev) => [
@@ -198,6 +248,13 @@ export default function Home() {
             onClick={() => setIsCafeDate(!isCafeDate)}
           >
             {isCafeDate ? 'Back Home' : 'Cafe Date'}
+          </button>
+          <button 
+            className="audio-toggle-btn"
+            onClick={() => setIsAudioEnabled(!isAudioEnabled)}
+            title={isAudioEnabled ? 'Disable voice' : 'Enable voice'}
+          >
+            {isAudioEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
           </button>
           <Cpu size={16} className="header-icon" />
         </div>

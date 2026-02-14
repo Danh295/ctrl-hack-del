@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 
 type ChatHistoryItem = {
   role: "user" | "model";
@@ -112,7 +113,49 @@ Make the user feel emotionally connected through gentle conversation, warmth, an
     // Analyze sentiment to determine expression
     const expression = analyzeExpression(reply);
 
-    return NextResponse.json({ reply, expression });
+    // Optionally generate audio via ElevenLabs
+    let audioBase64: string | undefined;
+    const elevenLabsKey = process.env.ELEVENLABS_API_KEY;
+    const voiceId = process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM";
+    
+    if (elevenLabsKey) {
+      try {
+        console.log("🎤 Generating TTS audio...");
+        const client = new ElevenLabsClient({ apiKey: elevenLabsKey });
+        
+        const audio = await client.textToSpeech.convert(voiceId, {
+          text: reply,
+          modelId: "eleven_multilingual_v2",
+          voiceSettings: {
+            stability: 0.5,
+            similarityBoost: 0.75,
+            style: 0.0,
+            useSpeakerBoost: true,
+          },
+        });
+
+        // Convert audio stream to buffer
+        const chunks: Uint8Array[] = [];
+        const reader = audio.getReader();
+        
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value);
+        }
+        
+        const audioBuffer = Buffer.concat(chunks);
+        audioBase64 = audioBuffer.toString("base64");
+        console.log("✅ TTS audio generated successfully");
+      } catch (ttsError) {
+        console.error("❌ TTS generation error:", ttsError);
+        // Continue without audio if TTS fails
+      }
+    } else {
+      console.warn("⚠️ ELEVENLABS_API_KEY not found in environment variables");
+    }
+
+    return NextResponse.json({ reply, expression, audio: audioBase64 });
   } catch (error) {
     console.error("Gemini API error:", error);
     return NextResponse.json(
