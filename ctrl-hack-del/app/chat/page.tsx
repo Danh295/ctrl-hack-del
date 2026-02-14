@@ -15,6 +15,41 @@ interface Message {
   emotion?: string;
 }
 
+interface MenuItem {
+  name: string;
+  price: number;
+  image: string;
+  category: string;
+  description: string;
+}
+
+const MENU_ITEMS: MenuItem[] = [
+  // Coffee
+  { name: "Cappuccino", price: 7, image: "/menu/coffee.png", category: "Coffee", description: "Rich espresso topped with velvety steamed milk foam" },
+  { name: "Latte", price: 8, image: "/menu/latte.png", category: "Coffee", description: "Smooth espresso blended with creamy steamed milk" },
+  { name: "Black Coffee", price: 4, image: "/menu/plain_latte.png", category: "Coffee", description: "A classic brew to warm the heart" },
+  // Tea
+  { name: "Tea", price: 4, image: "/menu/tea.png", category: "Tea", description: "Delicate loose-leaf tea, steeped to perfection" },
+  { name: "Matcha Latte", price: 7, image: "/menu/matcha_latte.png", category: "Tea", description: "Ceremonial-grade matcha whisked with frothy milk" },
+  // Cakes
+  { name: "Strawberry Shortcake", price: 15, image: "/menu/shortcake.png", category: "Cakes", description: "Fluffy sponge layered with fresh strawberries and cream" },
+  { name: "Blueberry Shortcake", price: 16, image: "/menu/blueberry_cake.png", category: "Cakes", description: "Bursting with juicy blueberries in every bite" },
+  { name: "Chocolate Cake", price: 15, image: "/menu/chocolate_cake.png", category: "Cakes", description: "Decadent dark chocolate ganache for two" },
+  { name: "Valentine's Special Cake", price: 18, image: "/menu/valentines_cake.png", category: "Cakes", description: "A special cake made just for two" },
+  { name: "Matcha Cake", price: 16, image: "/menu/matcha_cake.png", category: "Cakes", description: "Earthy matcha sponge with white chocolate frosting" },
+  // Pastry
+  { name: "Macarons (4)", price: 12, image: "/menu/macarons.png", category: "Pastry", description: "Assorted French macarons, crisp shells with soft filling" },
+  { name: "Crepes", price: 10, image: "/menu/crepe.png", category: "Pastry", description: "Thin French crepes drizzled with honey and berries" },
+  // Smoothies
+  { name: "Strawberry Smoothie", price: 12, image: "/menu/strawberry_smoothie.png", category: "Smoothies", description: "Fresh strawberries blended into a sweet pink dream" },
+  { name: "Chocolate Smoothie", price: 12, image: "/menu/chocolate_smoothie.png", category: "Smoothies", description: "Indulgent chocolate blended smooth and creamy" },
+  { name: "Mango Smoothie", price: 14, image: "/menu/mango_smoothie.png", category: "Smoothies", description: "Tropical mango puree, sunshine in a glass" },
+  // Alcohol
+  { name: "Whiskey", price: 15, image: "/menu/whiskey.png", category: "Alcohol", description: "Aged single malt, neat — for a bold date night" },
+];
+
+const MENU_CATEGORIES = ["Coffee", "Tea", "Cakes", "Pastry", "Smoothies", "Alcohol"];
+
 export default function Home() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -60,6 +95,70 @@ export default function Home() {
   const [isTranscribing, setIsTranscribing] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+
+  // Menu system state
+  const [currency, setCurrency] = useState(50);
+  const [orderedItems, setOrderedItems] = useState<string[]>([]);
+  const [showMenu, setShowMenu] = useState(false);
+  const [menuTab, setMenuTab] = useState("Coffee");
+
+  const sendChatMessage = async (messageText: string) => {
+    const userMsg: Message = { role: "user", text: messageText };
+    setChatHistory((prev) => [...prev, userMsg]);
+    setIsThinking(true);
+
+    try {
+      const historyForApi = chatHistory.map((msg) => ({
+        role: msg.role === "user" ? "user" : "model",
+        content: msg.text,
+      }));
+
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: messageText, history: historyForApi, model: modelName }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to fetch response");
+      }
+
+      const replyText = data?.reply || "(No response)";
+      const expression = data?.expression || "Normal";
+      const audioBase64 = data?.audio;
+
+      setChatHistory((prev) => [...prev, { role: "ai", text: replyText, emotion: expression }]);
+      setCurrentEmotion(expression);
+
+      const multiplier = EMOTION_MULTIPLIERS[expression] ?? 0;
+      if (multiplier !== 0) {
+        const change = AFFECTION_BASE_CHANGE * multiplier;
+        setAffection((prev) => Math.max(0, Math.min(100, prev + change)));
+      }
+
+      if (audioBase64 && isAudioEnabled) {
+        playAudio(audioBase64);
+      }
+    } catch (error) {
+      console.error(error);
+      setChatHistory((prev) => [
+        ...prev,
+        { role: "ai", text: "⚠️ Gemini is unavailable. Check your API key and try again." },
+      ]);
+      setCurrentEmotion("Normal");
+    } finally {
+      setIsThinking(false);
+    }
+  };
+
+  const handlePurchase = (item: MenuItem) => {
+    if (currency < item.price || orderedItems.includes(item.name)) return;
+    setCurrency((prev) => prev - item.price);
+    setOrderedItems((prev) => [...prev, item.name]);
+    setShowMenu(false);
+    sendChatMessage(`I just ordered ${item.name} for us!`);
+  };
 
   // Initial loading screen
   useEffect(() => {
@@ -213,67 +312,9 @@ export default function Home() {
 
   const handleSend = async () => {
     if (!input.trim() || isThinking) return;
-
-    const userMsg: Message = { role: "user", text: input };
     const userInput = input;
-    setChatHistory((prev) => [...prev, userMsg]);
     setInput("");
-    setIsThinking(true);
-
-    try {
-      const historyForApi = chatHistory.map((msg) => ({
-        role: msg.role === "user" ? "user" : "model",
-        content: msg.text,
-      }));
-
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userInput, history: historyForApi, model: modelName }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data?.error || "Failed to fetch response");
-      }
-
-      const replyText = data?.reply || "(No response)";
-      const expression = data?.expression || "Normal";
-      const audioBase64 = data?.audio;
-      
-      console.log("📝 Response received:", { 
-        hasText: !!replyText, 
-        hasAudio: !!audioBase64,
-        audioEnabled: isAudioEnabled 
-      });
-      
-      setChatHistory((prev) => [...prev, { role: "ai", text: replyText, emotion: expression }]);
-      setCurrentEmotion(expression);
-      
-      // Update affection based on emotion
-      const multiplier = EMOTION_MULTIPLIERS[expression] ?? 0;
-      if (multiplier !== 0) {
-        const change = AFFECTION_BASE_CHANGE * multiplier;
-        setAffection((prev) => Math.max(0, Math.min(100, prev + change)));
-      }
-      
-      // Play audio if available and enabled
-      if (audioBase64 && isAudioEnabled) {
-        console.log("🎵 Audio data received, attempting playback...");
-        playAudio(audioBase64);
-      } else if (!audioBase64) {
-        console.warn("⚠️ No audio data in response. Check if ELEVENLABS_API_KEY is set in .env.local");
-      }
-    } catch (error) {
-      console.error(error);
-      setChatHistory((prev) => [
-        ...prev,
-        { role: "ai", text: "⚠️ Gemini is unavailable. Check your API key and try again." },
-      ]);
-      setCurrentEmotion("Normal");
-    } finally {
-      setIsThinking(false);
-    }
+    await sendChatMessage(userInput);
   };
 
   return (
@@ -342,12 +383,27 @@ export default function Home() {
             </div>
             
             {/* Table Layer - In front of model */}
-            <div 
+            <div
               className="parallax-layer table-layer"
               style={{
                 transform: `translateX(${mousePos.x * 4}px)`
               }}
             />
+
+            {/* Ordered items on table */}
+            {orderedItems.length > 0 && (
+              <div className="table-items" style={{ transform: `translateX(${mousePos.x * 4}px)` }}>
+                {orderedItems.map((name, i) => {
+                  const item = MENU_ITEMS.find((m) => m.name === name);
+                  if (!item) return null;
+                  return (
+                    <div key={name} className="table-item" style={{ animationDelay: `${i * 0.1}s` }}>
+                      <img src={item.image} alt={item.name} />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </>
         )}
       </section>
@@ -386,7 +442,15 @@ export default function Home() {
           >
             {isCafeDate ? 'Back Home' : affection >= CAFE_DATE_THRESHOLD ? 'Cafe Date' : `🔒 ${CAFE_DATE_THRESHOLD}%`}
           </button>
-          <button 
+          {isCafeDate && (
+            <button
+              className="cafe-date-btn menu-btn"
+              onClick={() => setShowMenu(true)}
+            >
+              Menu
+            </button>
+          )}
+          <button
             className="audio-toggle-btn"
             onClick={() => setIsAudioEnabled(!isAudioEnabled)}
             title={isAudioEnabled ? 'Disable voice' : 'Enable voice'}
@@ -459,6 +523,71 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Menu Modal */}
+      {showMenu && (
+        <div className="menu-overlay" onClick={() => setShowMenu(false)}>
+          <div className="menu-panel" onClick={(e) => e.stopPropagation()}>
+            {/* Banner header */}
+            <div className="menu-banner">
+              <img src="/menu/menupage.png" alt="Our Menu" />
+              <button className="menu-close" onClick={() => setShowMenu(false)}>✕</button>
+            </div>
+
+            {/* Currency display */}
+            <div className="menu-currency">
+              <span className="menu-currency-label">Your Balance</span>
+              <span className="menu-currency-value">${currency}</span>
+            </div>
+
+            {/* Tab navigation */}
+            <div className="menu-tabs">
+              {MENU_CATEGORIES.map((cat) => (
+                <button
+                  key={cat}
+                  className={`menu-tab ${menuTab === cat ? "active" : ""}`}
+                  onClick={() => setMenuTab(cat)}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
+            {/* Item grid */}
+            <div className="menu-items">
+              {MENU_ITEMS.filter((item) => item.category === menuTab).map((item) => {
+                const isOrdered = orderedItems.includes(item.name);
+                const canAfford = currency >= item.price;
+                return (
+                  <div
+                    key={item.name}
+                    className={`menu-item-card ${isOrdered ? "ordered" : ""} ${!canAfford && !isOrdered ? "cant-afford" : ""}`}
+                  >
+                    {isOrdered && <span className="on-table-badge">On table</span>}
+                    <div className="menu-item-image">
+                      <img src={item.image} alt={item.name} />
+                    </div>
+                    <div className="menu-item-info">
+                      <span className="menu-item-name">{item.name}</span>
+                      <span className="menu-item-desc">{item.description}</span>
+                      <span className="menu-item-price">${item.price}</span>
+                    </div>
+                    {!isOrdered && (
+                      <button
+                        className={`order-btn ${!canAfford ? "disabled" : ""}`}
+                        onClick={() => handlePurchase(item)}
+                        disabled={!canAfford}
+                      >
+                        {canAfford ? "Order" : "Not enough $"}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
     </main>
   );
