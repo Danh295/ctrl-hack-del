@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { Send, Mic, Cpu, Volume2, VolumeX, Heart } from "lucide-react";
+import { Send, Mic, Cpu, Volume2, VolumeX, Heart, ArrowLeft } from "lucide-react";
 
 // Import Canvas with NO SSR
 const ModelCanvas = dynamic(() => import("@/components/ModelCanvas"), {
@@ -17,6 +17,7 @@ interface Message {
 
 export default function Home() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const modelName = searchParams.get("model") || "arisa"; // Default to arisa
   
   // Affection system constants
@@ -284,6 +285,11 @@ export default function Home() {
         </div>
       )}
       
+      {/* Back Button */}
+      <button className="chat-back-button" onClick={() => router.push("/")}>
+        <ArrowLeft size={16} />
+      </button>
+
       {/* LEFT COLUMN: ARISA MODEL WITH PARALLAX (65% Width) */}
       <section className="model-section">
         {!isCafeDate ? (
