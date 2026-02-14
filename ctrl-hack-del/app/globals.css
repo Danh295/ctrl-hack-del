@@ -646,6 +646,7 @@ body {
   justify-content: center;
   width: 100vw;
   height: 100vh;
+  padding: 3vh 2rem;
   background: linear-gradient(to bottom, #ffffff, #fff5f8);
   overflow: hidden;
   position: relative;
@@ -694,8 +695,10 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  width: 100%;
   max-width: 1200px;
-  padding: 2rem;
+  max-height: 100%;
+  gap: clamp(1rem, 2vh, 2rem);
   animation: fadeInUp 0.8s ease-out;
 }
 
@@ -711,14 +714,13 @@ body {
 }
 
 .landing-title {
-  font-size: 3rem;
+  font-size: clamp(1.5rem, 4vw, 3rem);
   font-weight: 700;
   color: var(--warm-plum);
   text-align: center;
-  margin-bottom: 1rem;
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
   letter-spacing: 0.02em;
   text-shadow: 0 2px 10px rgba(216, 140, 160, 0.3);
 }
@@ -740,27 +742,29 @@ body {
 }
 
 .landing-subtitle {
-  font-size: 1.25rem;
+  font-size: clamp(0.85rem, 1.5vw, 1.25rem);
   color: var(--dusty-pink);
   text-align: center;
-  margin-bottom: 3rem;
   font-weight: 500;
 }
 
 .model-selection-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(0.75rem, 1.5vw, 2rem);
   width: 100%;
   max-width: 900px;
 }
 
 .model-card {
   position: relative;
+  flex: 1 1 180px;
+  max-width: 280px;
   background: linear-gradient(135deg, var(--cream-rose) 0%, var(--pale-blush) 100%);
   border: 2px solid var(--light-mauve);
   border-radius: 1.5rem;
-  padding: 2.5rem 2rem;
+  padding: clamp(1rem, 2vh, 2.5rem) clamp(1rem, 1.5vw, 2rem);
   cursor: pointer;
   transition: all 0.3s ease;
   overflow: hidden;
@@ -779,7 +783,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: clamp(0.25rem, 1vh, 1rem);
   transition: transform 0.3s ease;
 }
 
@@ -788,14 +792,13 @@ body {
 }
 
 .model-icon {
-  width: 3rem;
-  height: 3rem;
+  width: clamp(1.5rem, 3vw, 3rem);
+  height: clamp(1.5rem, 3vw, 3rem);
   color: var(--soft-berry);
-  margin-bottom: 0.5rem;
 }
 
 .model-name {
-  font-size: 1.75rem;
+  font-size: clamp(1rem, 2vw, 1.75rem);
   font-weight: 700;
   color: var(--warm-plum);
   text-align: center;
@@ -803,27 +806,27 @@ body {
 }
 
 .model-description {
-  font-size: 1rem;
+  font-size: clamp(0.75rem, 1.2vw, 1rem);
   color: var(--dusty-pink);
   text-align: center;
-  line-height: 1.5;
+  line-height: 1.4;
   margin: 0;
 }
 
 .model-card-hover {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: linear-gradient(to top, var(--soft-berry), transparent);
-  padding: 1.5rem;
-  transform: translateY(100%);
-  transition: transform 0.3s ease;
-  z-index: 1;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(to top, rgba(216, 140, 160, 0.45), rgba(216, 140, 160, 0.25));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 3;
 }
 
 .model-card:hover .model-card-hover {
-  transform: translateY(0);
+  opacity: 1;
 }
 
 .model-card-hover span {
