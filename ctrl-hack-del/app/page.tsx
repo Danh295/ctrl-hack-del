@@ -1,65 +1,114 @@
-import Image from "next/image";
+"use client";
+import { useState } from "react";
+import dynamic from "next/dynamic";
+import { Send, Mic, Cpu } from "lucide-react";
+
+// Import Canvas with NO SSR
+const ModelCanvas = dynamic(() => import("@/components/ModelCanvas"), {
+  ssr: false,
+});
+
+interface Message {
+  role: 'user' | 'ai';
+  text: string;
+  emotion?: string;
+}
 
 export default function Home() {
+  const [input, setInput] = useState("");
+  const [chatHistory, setChatHistory] = useState<Message[]>([]);
+  const [currentEmotion, setCurrentEmotion] = useState("Neutral");
+
+  const handleSend = async () => {
+    if (!input.trim()) return;
+
+    // 1. Add User Message
+    const userMsg: Message = { role: "user", text: input };
+    setChatHistory((prev) => [...prev, userMsg]);
+    const userInput = input;
+    setInput("");
+
+    // 2. Simulate AI Response (DELETE THIS LATER)
+    setTimeout(() => {
+      const responses = [
+        { text: "Are you ignored me? Rude.", emotion: "Angry" },
+        { text: "Omg stop, you're making me blush!", emotion: "Shy" },
+        { text: "I am literally a computer program.", emotion: "Neutral" },
+      ];
+      const reply = responses[Math.floor(Math.random() * responses.length)];
+      
+      setChatHistory(prev => [...prev, { role: "ai", ...reply }]);
+      setCurrentEmotion(reply.emotion);
+    }, 1000);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="flex w-screen h-screen bg-gray-950 overflow-hidden text-white">
+      
+      {/* LEFT COLUMN: CHAT INTERFACE (35% Width) */}
+      <section className="w-[35%] min-w-[350px] flex flex-col border-r border-white/10 bg-black/40 backdrop-blur-sm z-10">
+        
+        {/* Header */}
+        <div className="p-4 border-b border-white/10 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_#22c55e]" />
+            <h1 className="font-mono text-sm tracking-widest text-green-400">ARISA_OS v1.0</h1>
+          </div>
+          <Cpu size={16} className="text-white/20" />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+
+        {/* Chat Area */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-white/10">
+          {chatHistory.length === 0 && (
+            <div className="h-full flex items-center justify-center text-white/20 text-sm font-mono text-center">
+              SYSTEM READY.<br/>AWAITING INPUT.
+            </div>
+          )}
+          
+          {chatHistory.map((msg, i) => (
+            <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div className={`max-w-[85%] p-3 rounded-xl text-sm leading-relaxed
+                ${msg.role === "user" 
+                  ? "bg-cyan-950/50 border border-cyan-500/20 text-cyan-100 rounded-br-none" 
+                  : "bg-pink-950/40 border border-pink-500/20 text-pink-100 rounded-bl-none"
+                }`}>
+                {msg.text}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Input Area */}
+        <div className="p-4 border-t border-white/10 bg-black/20">
+          <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg p-2 focus-within:ring-1 focus-within:ring-cyan-500/50 transition-all">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              placeholder="Command..."
+              className="flex-1 bg-transparent border-none outline-none text-sm px-2 font-mono placeholder-white/20"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <button onClick={handleSend} className="p-2 hover:bg-white/10 rounded-md transition-colors text-cyan-400">
+              <Send size={16} />
+            </button>
+          </div>
         </div>
-      </main>
-    </div>
+      </section>
+
+      {/* RIGHT COLUMN: WAIFU RENDER (65% Width) */}
+      <section className="flex-1 relative bg-gradient-to-br from-gray-900 via-gray-900 to-black">
+        {/* Grid Pattern Overlay */}
+        <div className="absolute inset-0 opacity-10" 
+             style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '20px 20px' }} 
+        />
+        
+        {/* The Model */}
+        <div className="absolute inset-0">
+          <ModelCanvas emotion={currentEmotion} />
+        </div>
+      </section>
+
+    </main>
   );
 }
