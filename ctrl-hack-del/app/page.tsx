@@ -79,8 +79,12 @@ export default function Home() {
         {/* Chat Area */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-white/10">
           {chatHistory.length === 0 && (
-            <div className="h-full flex items-center justify-center text-white/20 text-sm font-mono text-center">
-              SYSTEM READY.<br/>AWAITING INPUT.
+            <div className="h-full flex items-center justify-center text-pink-300/40 text-sm text-center px-6">
+              <p className="leading-relaxed">
+                Oh... um, hi there~ <br/>
+                I wasn't expecting anyone... <br/>
+                <span className="text-pink-200/60 text-xs mt-2 block">Feel free to say something...</span>
+              </p>
             </div>
           )}
           
