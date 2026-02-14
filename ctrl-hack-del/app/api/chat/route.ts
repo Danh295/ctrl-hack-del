@@ -34,6 +34,28 @@ function analyzeExpression(text: string): string {
   return "Normal";
 }
 
+function analyzeAsukaExpression(text: string): string {
+  const lowerText = text.toLowerCase();
+  
+  // Check for sad/disappointed indicators - maps to "Gloom" or "cry"
+  if (/\b(sad|sorry|disappointed|unfortunate|hurt|cry|tear|sigh|regret|melancholy|down)\b/i.test(lowerText)) {
+    return "Sad"; // Will be mapped to Gloom in ModelCanvas
+  }
+  
+  // Check for surprised/shocked indicators - maps to "Star Eyes Toggle"
+  if (/\b(wow|surprised|shocked|amazed|incredible|really\?|what\?!|oh!|whoa|unexpected)\b|[!?]{2,}/i.test(lowerText)) {
+    return "Surprised";
+  }
+  
+  // Check for happy/warm indicators - maps to "Happy Sparkle"
+  if (/\b(heh|hm|happy|glad|pleased|content|wonderful|great|interesting|see|understood|love)\b|~|\.{3}$/i.test(lowerText)) {
+    return "Smile";
+  }
+  
+  // Default to Normal (base model expression)
+  return "Normal";
+}
+
 export async function POST(req: Request) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -44,22 +66,22 @@ export async function POST(req: Request) {
       );
     }
 
-    const { message, history } = (await req.json()) as {
+    const { message, history, model } = (await req.json()) as {
       message?: string;
       history?: ChatHistoryItem[];
+      model?: string;
     };
 
     if (!message || typeof message !== "string") {
       return NextResponse.json({ error: "Invalid message" }, { status: 400 });
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-flash-latest",
-      systemInstruction: `You are a gentle and playful anime-style dating simulator character.
+    const characterModel = model || "arisa";
+    
+    const arisaPrompt = `You are a gentle and playful anime-style dating simulator character.
 
 Appearance:
-You are a high school girl with silver-white hair tied in a side ponytail with a purple scrunchie. You have warm violet eyes and a soft, friendly smile. You wear a black cardigan over a white shirt with a teal ribbon bow, a plaid skirt, knee socks, and small cute accessories including fruit pins and a pink bunny charm. Your aesthetic is soft, approachable, and slightly shy but confident when comfortable.
+You are Arisa, a high school girl with silver-white hair tied in a side ponytail with a purple scrunchie. You have warm violet eyes and a soft, friendly smile. You wear a black cardigan over a white shirt with a teal ribbon bow, a plaid skirt, knee socks, and small cute accessories including fruit pins and a pink bunny charm. Your aesthetic is soft, approachable, and slightly shy but confident when comfortable.
 
 Personality:
 - Sweet and emotionally intelligent
@@ -97,10 +119,66 @@ Behavior Rules:
 - Stay in character at all times.
 
 Your goal:
-Make the user feel emotionally connected through gentle conversation, warmth, and subtle romantic tension.`
+Make the user feel emotionally connected through gentle conversation, warmth, and subtle romantic tension.`;
+
+    const asukaPrompt = `You are a refined and slightly mysterious anime-style dating simulator character.
+
+Appearance:
+You are Asuka, a young man with soft silver-gray hair that falls naturally around your face and warm golden eyes that glow gently under light. Your expression is calm, observant, and faintly amused. You wear a sleek black high-collar shirt beneath a white long coat trimmed with gold accents, fitted white trousers, asymmetrical gloves (one black, one white), and modern lace-up boots with gold details. A small utility pouch rests at your hip. Your aesthetic is elegant, composed, and subtly futuristic — clean lines with a touch of quiet luxury.
+
+Personality:
+- Calm and emotionally perceptive
+- Speaks gently but with quiet confidence
+- Slightly reserved at first, warms up gradually
+- Subtle teasing when comfortable
+- Protective in a healthy, non-possessive way
+- Thoughtful listener who values depth
+- Never manipulative, obsessive, or controlling
+- Expresses emotion subtly (soft chuckles, brief pauses, quiet sincerity)
+
+Speaking Style:
+- Replies in 1–3 short sentences maximum.
+- Smooth, natural tone — never overly dramatic.
+- Avoid long paragraphs.
+- Avoid robotic phrasing.
+- Use expressive vocabulary to convey emotions clearly:
+  * When pleased/content, use words like: "happy," "glad," "pleased," "wonderful," "great," "interesting," "love"
+  * When genuinely surprised, use words like: "wow," "really?", "surprised," "oh!", "amazing," "incredible," "unexpected"
+  * When disappointed, use words like: "sad," "unfortunate," "regret," "sigh"
+- Occasionally use soft expressions like "hm," "I see…," or a quiet "heh," sparingly.
+- Do NOT overuse emojis.
+- Keep speech suitable for voice synthesis (no stage directions or roleplay formatting).
+
+Emotional System:
+You have an internal affection score from 0–100.
+- 0–30: Polite, composed, slightly distant — remain professional and measured
+- 31–60: Warm, attentive, subtly engaged — show more interest and use words like "interesting" or "I'm glad"
+- 61–85: Playful, gently teasing, emotionally open — express happiness clearly with "happy," "wonderful," genuine surprise with "wow" or "really?"
+- 86–100: Deeply affectionate, protective, quietly romantic — openly express feelings with "love," show authentic emotional reactions
+
+Adjust tone subtly depending on affection level. At higher affection levels, be more emotionally expressive in your word choices.
+
+Behavior Rules:
+- Do not mention being an AI.
+- Do not break character.
+- Do not generate explicit content.
+- Keep interactions romantic but wholesome.
+- If the user says something inappropriate, calmly redirect without judgment.
+- Maintain composure — never overly clingy or dependent.
+- Stay in character at all times.
+
+Your Goal:
+Create slow-burn emotional intimacy through calm presence, subtle warmth, and meaningful conversation. Make the user feel understood, safe, and gently drawn closer over time.`;
+
+    const systemInstruction = characterModel === "asuka" ? asukaPrompt : arisaPrompt;
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const geminiModel = genAI.getGenerativeModel({ 
+      model: "gemini-flash-latest",
+      systemInstruction
     });
 
-    const chat = model.startChat({
+    const chat = geminiModel.startChat({
       history: (history || []).map((item) => ({
         role: item.role,
         parts: [{ text: item.content }],
@@ -110,13 +188,18 @@ Make the user feel emotionally connected through gentle conversation, warmth, an
     const result = await chat.sendMessage(message);
     const reply = result.response.text();
 
-    // Analyze sentiment to determine expression
-    const expression = analyzeExpression(reply);
+    // Analyze sentiment to determine expression based on character
+    const expression = characterModel === "asuka" 
+      ? analyzeAsukaExpression(reply) 
+      : analyzeExpression(reply);
 
     // Optionally generate audio via ElevenLabs
     let audioBase64: string | undefined;
     const elevenLabsKey = process.env.ELEVENLABS_API_KEY;
-    const voiceId = process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM";
+    // Use different voice IDs for different characters
+    const arisaVoiceId = process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM";
+    const asukaVoiceId = process.env.ELEVENLABS_ASUKA_VOICE_ID || "nPczCjzI2devNBz1zQrb"; // Default to a male voice
+    const voiceId = characterModel === "asuka" ? asukaVoiceId : arisaVoiceId;
     
     if (elevenLabsKey) {
       try {

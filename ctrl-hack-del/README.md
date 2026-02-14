@@ -13,11 +13,16 @@ Create a local env file and add your API keys:
 	GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE
 	ELEVENLABS_API_KEY=YOUR_ELEVENLABS_API_KEY_HERE
 	```
-3) (Optional) Customize the voice:
+3) (Optional) Customize the voices:
 	```
-	ELEVENLABS_VOICE_ID=YOUR_VOICE_ID_HERE
+	ELEVENLABS_VOICE_ID=YOUR_ARISA_VOICE_ID_HERE
+	ELEVENLABS_ASUKA_VOICE_ID=YOUR_ASUKA_VOICE_ID_HERE
 	```
-	If not set, defaults to Rachel (21m00Tcm4TlvDq8ikWAM). Find voice IDs at [ElevenLabs Voice Library](https://elevenlabs.io/voice-library).
+	**Voice Defaults:**
+	- `ELEVENLABS_VOICE_ID`: Arisa's voice (female) - defaults to "21m00Tcm4TlvDq8ikWAM" (Rachel)
+	- `ELEVENLABS_ASUKA_VOICE_ID`: Asuka's voice (male) - defaults to "nPczCjzI2devNBz1zQrb" (Brian)
+	
+	Find more voice IDs at [ElevenLabs Voice Library](https://elevenlabs.io/voice-library).
 
 **Note:** The chatbot will work without ElevenLabs API key, but text-to-speech will be disabled.
 

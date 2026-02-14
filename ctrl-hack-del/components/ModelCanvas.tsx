@@ -9,9 +9,10 @@ if (typeof window !== "undefined") {
 
 interface ModelCanvasProps {
   emotion: string;
+  model?: string; // "arisa" or "asuka"
 }
 
-export default function ModelCanvas({ emotion }: ModelCanvasProps) {
+export default function ModelCanvas({ emotion, model = "arisa" }: ModelCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const modelRef = useRef<any>(null);
 
@@ -54,23 +55,30 @@ export default function ModelCanvas({ emotion }: ModelCanvasProps) {
         });
 
         // 4. Load Model
-        const modelPath = "/models/01arisa/arisa_t11.model3.json";
-        const model = await Live2DModel.from(modelPath);
+        const modelPath = model === "asuka" 
+          ? "/models/asuka/Asuka.model3.json"
+          : "/models/01arisa/arisa_t11.model3.json";
+        const loadedModel = await Live2DModel.from(modelPath);
 
-        app.stage.addChild(model as unknown as PIXI.DisplayObject);
-        modelRef.current = model;
+        app.stage.addChild(loadedModel as unknown as PIXI.DisplayObject);
+        modelRef.current = loadedModel;
 
         // Scale & Position Logic
-        const scaleX = (canvasRef.current!.width * 0.7) / model.width;
-        const scaleY = (canvasRef.current!.height * 1.2) / model.height;
+        const scaleX = (canvasRef.current!.width * 0.7) / loadedModel.width;
+        const scaleY = (canvasRef.current!.height * 1.2) / loadedModel.height;
         const scale = Math.min(scaleX, scaleY);
 
-        model.scale.set(scale);
-        model.x = canvasRef.current!.width / 2;
-        model.y = canvasRef.current!.height / 3 * 2;
-        model.anchor.set(0.5, 0.5);
+        loadedModel.scale.set(scale);
+        loadedModel.x = canvasRef.current!.width / 2;
+        loadedModel.y = canvasRef.current!.height / 3 * 2;
+        loadedModel.anchor.set(0.5, 0.5);
 
-        model.motion('Idle');
+        loadedModel.motion('Idle');
+
+        // For Asuka, toggle the coat off permanently
+        if (model === "asuka" && loadedModel.expression) {
+          loadedModel.expression('coat toggle');
+        }
 
       } catch (e) {
         console.error(e);
@@ -82,30 +90,41 @@ export default function ModelCanvas({ emotion }: ModelCanvasProps) {
     return () => {
       if (app) app.destroy(true);
     };
-  }, []);
+  }, [model]); // Re-run when model changes
 
   // Emotion Switcher - Use actual expression file names
   useEffect(() => {
     if (modelRef.current && emotion) {
       try {
-        // Map to actual .exp3.json file names in /models/01arisa/expressions/
-        const expressionFiles: Record<string, string> = {
+        // Map emotions to expression files based on model
+        const arisaExpressions: Record<string, string> = {
           'Angry': 'Angry',
           'Sad': 'Sad',
           'Smile': 'Smile',
           'Surprised': 'Surprised',
           'Normal': 'Normal'
         };
+
+        const asukaExpressions: Record<string, string> = {
+          'Angry': 'Gloom',
+          'Sad': 'Gloom',
+          'Smile': 'Happy',
+          'Surprised': 'Happy'
+        };
         
-        const expName = expressionFiles[emotion] || 'Normal';
-        if (modelRef.current.expression) {
+        const expressionFiles = model === "asuka" ? asukaExpressions : arisaExpressions;
+        const expName = expressionFiles[emotion];
+        
+        // Only set expression if it exists in the mapping
+        // For Asuka's "Normal", we skip setting expression to use the base model state
+        if (expName && modelRef.current.expression) {
           modelRef.current.expression(expName);
         }
       } catch (e) {
         console.error('Failed to set expression:', e);
       }
     }
-  }, [emotion]);
+  }, [emotion, model]);
 
   return (
     <div className="w-full h-full relative flex items-center justify-center">
