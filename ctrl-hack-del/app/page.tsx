@@ -40,7 +40,7 @@ export default function Home() {
 
   // Initial loading screen
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
+    const timer = setTimeout(() => setIsLoading(false), 1500);
     return () => clearTimeout(timer);
   }, []);
 
@@ -48,7 +48,7 @@ export default function Home() {
   useEffect(() => {
     if (isLoading) return; // Skip on initial load
     setIsLoading(true);
-    const timer = setTimeout(() => setIsLoading(false), 500);
+    const timer = setTimeout(() => setIsLoading(false), 1500);
     return () => clearTimeout(timer);
   }, [isCafeDate]);
 
@@ -187,7 +187,7 @@ export default function Home() {
       {/* Loading Screen */}
       {isLoading && (
         <div className="loading-screen">
-          <p className="loading-text">loading simulation</p>
+          <p className="loading-text">travelling...</p>
         </div>
       )}
       
