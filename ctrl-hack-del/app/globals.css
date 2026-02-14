@@ -89,9 +89,9 @@ body {
 /* Morning sky (5am - 12pm) */
 .sky-layer.sky-morning {
   background: linear-gradient(to bottom, 
-    #FFE5B4 0%,
-    #FFDAB9 30%,
-    #FFE4E1 60%,
+    #abd8ff 0%,
+    #b9dfff 30%,
+    #b0cee7 60%,
     #FFF0F5 100%
   ) !important;
 }
@@ -99,8 +99,8 @@ body {
 /* Afternoon sky (12pm - 5pm) */
 .sky-layer.sky-afternoon {
   background: linear-gradient(to bottom, 
-    #ffe5e5 0%, 
-    #fff0f3 30%,
+    #ffa369 0%, 
+    #ffd1ad 30%,
     #f9d6d8 60%,
     #f4c9cc 100%
   ) !important;
@@ -109,8 +109,8 @@ body {
 /* Evening sky (5pm - 8pm) */
 .sky-layer.sky-evening {
   background: linear-gradient(to bottom, 
-    #FFB6C1 0%,
-    #FFB5C5 30%,
+    #7b5359 0%,
+    #af7e88 30%,
     #FF9AA2 60%,
     #E29399 100%
   ) !important;
@@ -249,7 +249,7 @@ body {
 
 /* Affection Meter */
 .affection-meter-container {
-  width: 30px;
+  width: 35px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -278,7 +278,7 @@ body {
 
 .affection-meter-bar {
   flex: 1;
-  width: 13px;
+  width: 18px;
   background: rgba(255, 255, 255, 0.6);
   border: 2px solid var(--light-mauve);
   border-radius: 12px;
@@ -293,9 +293,9 @@ body {
   left: 0;
   right: 0;
   background: linear-gradient(to top, 
-    var(--soft-berry) 0%, 
-    var(--dusty-pink) 50%, 
-    #d85e79 100%
+    #8d1731 0%, 
+    #fa3e67 50%, 
+    #ff1d4e 100%
   );
   transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 14px;
