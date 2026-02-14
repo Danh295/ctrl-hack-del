@@ -78,13 +78,13 @@ export default function ModelCanvas({ emotion }: ModelCanvasProps) {
         modelRef.current = model;
 
         // Scale & Position Logic
-        const scaleX = (canvasRef.current!.width * 0.4) / model.width;
-        const scaleY = (canvasRef.current!.height * 0.8) / model.height;
+        const scaleX = (canvasRef.current!.width * 0.7) / model.width;
+        const scaleY = (canvasRef.current!.height * 1.2) / model.height;
         const scale = Math.min(scaleX, scaleY);
 
         model.scale.set(scale);
         model.x = canvasRef.current!.width / 2;
-        model.y = canvasRef.current!.height / 2;
+        model.y = canvasRef.current!.height / 3 * 2;
         model.anchor.set(0.5, 0.5);
 
         model.motion('Idle');
@@ -103,19 +103,25 @@ export default function ModelCanvas({ emotion }: ModelCanvasProps) {
     };
   }, []);
 
-  // Emotion Switcher
+  // Emotion Switcher - Use actual expression file names
   useEffect(() => {
     if (modelRef.current && emotion) {
-      const expressionMap: Record<string, string> = {
-        'Happy': 'f01',
-        'Angry': 'f03',
-        'Sad': 'f04',
-        'Shy': 'f02',
-        'Neutral': 'f00'
-      };
-      const expId = expressionMap[emotion] || 'f01';
-      if (modelRef.current.expression) {
-        modelRef.current.expression(expId);
+      try {
+        // Map to actual .exp3.json file names in /models/01arisa/expressions/
+        const expressionFiles: Record<string, string> = {
+          'Angry': 'Angry',
+          'Sad': 'Sad',
+          'Smile': 'Smile',
+          'Surprised': 'Surprised',
+          'Normal': 'Normal'
+        };
+        
+        const expName = expressionFiles[emotion] || 'Normal';
+        if (modelRef.current.expression) {
+          modelRef.current.expression(expName);
+        }
+      } catch (e) {
+        console.error('Failed to set expression:', e);
       }
     }
   }, [emotion]);

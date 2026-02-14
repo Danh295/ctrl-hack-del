@@ -6,6 +6,33 @@ type ChatHistoryItem = {
   content: string;
 };
 
+function analyzeExpression(text: string): string {
+  const lowerText = text.toLowerCase();
+  
+  // Check for angry/frustrated indicators
+  if (/\b(angry|mad|annoyed|frustrated|irritated|upset|hmph|ugh)\b/i.test(lowerText)) {
+    return "Angry";
+  }
+  
+  // Check for sad/disappointed indicators
+  if (/\b(sad|sorry|disappointed|unfortunate|hurt|cry|tear|sigh|regret)\b/i.test(lowerText)) {
+    return "Sad";
+  }
+  
+  // Check for surprised/shocked indicators
+  if (/\b(wow|surprised|shocked|amazed|incredible|really\?|what\?!|oh!|whoa)\b|[!?]{2,}/i.test(lowerText)) {
+    return "Surprised";
+  }
+  
+  // Check for happy/joyful indicators
+  if (/\b(hehe|haha|happy|glad|excited|wonderful|great|amazing|love|yay|☺|😊)\b|~|♡/i.test(lowerText)) {
+    return "Smile";
+  }
+  
+  // Default to normal
+  return "Normal";
+}
+
 export async function POST(req: Request) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -82,7 +109,10 @@ Make the user feel emotionally connected through gentle conversation, warmth, an
     const result = await chat.sendMessage(message);
     const reply = result.response.text();
 
-    return NextResponse.json({ reply });
+    // Analyze sentiment to determine expression
+    const expression = analyzeExpression(reply);
+
+    return NextResponse.json({ reply, expression });
   } catch (error) {
     console.error("Gemini API error:", error);
     return NextResponse.json(
