@@ -430,7 +430,7 @@ export default function Home() {
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     if (isThinking || isLoading || showMenu || consecutiveAutoMsgs >= 3) return;
 
-    const delay = 15000 + Math.random() * 5000; // 15-20s
+    const delay = 5000 + Math.random() * 3000; // 5-8s
     idleTimerRef.current = setTimeout(() => {
       sendAutoMessage();
     }, delay);
