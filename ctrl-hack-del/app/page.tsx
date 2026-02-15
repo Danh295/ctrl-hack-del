@@ -43,7 +43,7 @@ export default function LandingPage() {
 
   const handleSelectModel = (model: string) => {
     if (model === "random") {
-      const randomModel = Math.random() > 0.5 ? "arisa" : "asuka";
+      const randomModel = Math.random() > 0.5 ? "arisa" : "chitose";
       router.push(`/chat?model=${randomModel}`);
     } else {
       router.push(`/chat?model=${model}`);
@@ -100,16 +100,16 @@ export default function LandingPage() {
             </div>
           </button>
 
-          {/* Asuka Button */}
+          {/* Chitose Button */}
           <button 
-            className="model-card asuka-card"
-            onClick={() => handleSelectModel("asuka")}
+            className="model-card chitose-card"
+            onClick={() => handleSelectModel("chitose")}
           >
             <div className="model-card-content">
               <Heart className="model-icon" />
-              <h2 className="model-name">Asuka</h2>
+              <h2 className="model-name">Chitose</h2>
               <p className="model-description">
-                Your charming non-chalant boyfriend
+                Your elegant and refined boyfriend
               </p>
             </div>
             <div className="model-card-hover">

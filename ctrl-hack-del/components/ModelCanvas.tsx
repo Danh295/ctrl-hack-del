@@ -9,7 +9,7 @@ if (typeof window !== "undefined") {
 
 interface ModelCanvasProps {
   emotion: string;
-  model?: string; // "arisa" or "asuka"
+  model?: string; // "arisa" or "chitose"
 }
 
 export default function ModelCanvas({ emotion, model = "arisa" }: ModelCanvasProps) {
@@ -55,8 +55,8 @@ export default function ModelCanvas({ emotion, model = "arisa" }: ModelCanvasPro
         });
 
         // 4. Load Model
-        const modelPath = model === "asuka" 
-          ? "/models/asuka/Asuka.model3.json"
+        const modelPath = model === "chitose" 
+          ? "/models/06chitose/chitose_t02.model3.json"
           : "/models/01arisa/arisa_t11.model3.json";
         const loadedModel = await Live2DModel.from(modelPath);
 
@@ -74,11 +74,6 @@ export default function ModelCanvas({ emotion, model = "arisa" }: ModelCanvasPro
         loadedModel.anchor.set(0.5, 0.5);
 
         loadedModel.motion('Idle');
-
-        // For Asuka, toggle the coat off permanently
-        if (model === "asuka" && loadedModel.expression) {
-          loadedModel.expression('coat toggle');
-        }
 
       } catch (e) {
         console.error(e);
@@ -105,18 +100,19 @@ export default function ModelCanvas({ emotion, model = "arisa" }: ModelCanvasPro
           'Normal': 'Normal'
         };
 
-        const asukaExpressions: Record<string, string> = {
-          'Angry': 'Gloom',
-          'Sad': 'Gloom',
-          'Smile': 'Happy',
-          'Surprised': 'Happy'
+        const chitoseExpressions: Record<string, string> = {
+          'Angry': 'Angry',
+          'Sad': 'Sad',
+          'Smile': 'Smile',
+          'Surprised': 'Surprised',
+          'Normal': 'Normal',
+          'Blushing': 'Blushing'
         };
         
-        const expressionFiles = model === "asuka" ? asukaExpressions : arisaExpressions;
+        const expressionFiles = model === "chitose" ? chitoseExpressions : arisaExpressions;
         const expName = expressionFiles[emotion];
         
         // Only set expression if it exists in the mapping
-        // For Asuka's "Normal", we skip setting expression to use the base model state
         if (expName && modelRef.current.expression) {
           modelRef.current.expression(expName);
         }

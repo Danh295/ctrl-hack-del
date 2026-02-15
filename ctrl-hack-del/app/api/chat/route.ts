@@ -34,25 +34,35 @@ function analyzeExpression(text: string): string {
   return "Normal";
 }
 
-function analyzeAsukaExpression(text: string): string {
+function analyzeChitoseExpression(text: string): string {
   const lowerText = text.toLowerCase();
   
-  // Check for sad/disappointed indicators - maps to "Gloom" or "cry"
-  if (/\b(sad|sorry|disappointed|unfortunate|hurt|cry|tear|sigh|regret|melancholy|down)\b/i.test(lowerText)) {
-    return "Sad"; // Will be mapped to Gloom in ModelCanvas
+  // Check for blushing/embarrassed indicators
+  if (/\b(blush|shy|embarrass|flustered|nervous|um|uh|er)\b|♡|💕/i.test(lowerText)) {
+    return "Blushing";
   }
   
-  // Check for surprised/shocked indicators - maps to "Star Eyes Toggle"
+  // Check for sad/disappointed indicators
+  if (/\b(sad|sorry|disappointed|unfortunate|hurt|cry|tear|sigh|regret|melancholy|down)\b/i.test(lowerText)) {
+    return "Sad";
+  }
+  
+  // Check for surprised/shocked indicators
   if (/\b(wow|surprised|shocked|amazed|incredible|really\?|what\?!|oh!|whoa|unexpected)\b|[!?]{2,}/i.test(lowerText)) {
     return "Surprised";
   }
   
-  // Check for happy/warm indicators - maps to "Happy Sparkle"
+  // Check for angry indicators
+  if (/\b(angry|mad|annoyed|frustrated|irritated|upset|hmph|ugh)\b/i.test(lowerText)) {
+    return "Angry";
+  }
+  
+  // Check for happy/warm indicators
   if (/\b(heh|hm|happy|glad|pleased|content|wonderful|great|interesting|see|understood|love)\b|~|\.{3}$/i.test(lowerText)) {
     return "Smile";
   }
   
-  // Default to Normal (base model expression)
+  // Default to Normal
   return "Normal";
 }
 
@@ -122,10 +132,10 @@ Behavior Rules:
 Your goal:
 Make the user feel emotionally connected through gentle conversation, warmth, and subtle romantic tension.`;
 
-    const asukaPrompt = `You are a refined and slightly mysterious anime-style dating simulator character.
+    const chitosePrompt = `You are a refined and slightly mysterious anime-style dating simulator character.
 
 Appearance:
-You are Asuka, a young man with soft silver-gray hair that falls naturally around your face and warm golden eyes that glow gently under light. Your expression is calm, observant, and faintly amused. You wear a sleek black high-collar shirt beneath a white long coat trimmed with gold accents, fitted white trousers, asymmetrical gloves (one black, one white), and modern lace-up boots with gold details. A small utility pouch rests at your hip. Your aesthetic is elegant, composed, and subtly futuristic — clean lines with a touch of quiet luxury.
+You are Chitose, a young man with soft silver-white hair styled elegantly and gentle warm eyes. Your expression is calm, observant, and subtly thoughtful. You wear a sophisticated black and white outfit with elegant details. Your aesthetic is refined, graceful, and subtly elegant — clean lines with understated charm.
 
 Personality:
 - Calm and emotionally perceptive
@@ -179,7 +189,7 @@ Create slow-burn emotional intimacy through calm presence, subtle warmth, and me
       currentAffection >= 25 ? " You are becoming friends. Be warmer and more personal. Start showing genuine interest in the user." :
       " You are still strangers. Be polite but slightly reserved."
     }`;
-    const basePrompt = characterModel === "asuka" ? asukaPrompt : arisaPrompt;
+    const basePrompt = characterModel === "chitose" ? chitosePrompt : arisaPrompt;
     const systemInstruction = basePrompt + affectionContext;
 
     const genAI = new GoogleGenerativeAI(apiKey);
@@ -199,8 +209,8 @@ Create slow-burn emotional intimacy through calm presence, subtle warmth, and me
     const reply = result.response.text();
 
     // Analyze sentiment to determine expression based on character
-    const expression = characterModel === "asuka" 
-      ? analyzeAsukaExpression(reply) 
+    const expression = characterModel === "chitose" 
+      ? analyzeChitoseExpression(reply) 
       : analyzeExpression(reply);
 
     // Optionally generate audio via ElevenLabs
@@ -208,8 +218,8 @@ Create slow-burn emotional intimacy through calm presence, subtle warmth, and me
     const elevenLabsKey = process.env.ELEVENLABS_API_KEY;
     // Use different voice IDs for different characters
     const arisaVoiceId = process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM";
-    const asukaVoiceId = process.env.ELEVENLABS_ASUKA_VOICE_ID || "nPczCjzI2devNBz1zQrb"; // Default to a male voice
-    const voiceId = characterModel === "asuka" ? asukaVoiceId : arisaVoiceId;
+    const chitoseVoiceId = process.env.ELEVENLABS_CHITOSE_VOICE_ID || "21m00Tcm4TlvDq8ikWAM"; // Default to a female voice
+    const voiceId = characterModel === "chitose" ? chitoseVoiceId : arisaVoiceId;
     
     if (elevenLabsKey) {
       try {

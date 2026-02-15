@@ -16,11 +16,11 @@ Create a local env file and add your API keys:
 3) (Optional) Customize the voices:
 	```
 	ELEVENLABS_VOICE_ID=YOUR_ARISA_VOICE_ID_HERE
-	ELEVENLABS_ASUKA_VOICE_ID=YOUR_ASUKA_VOICE_ID_HERE
+	ELEVENLABS_CHITOSE_VOICE_ID=YOUR_CHITOSE_VOICE_ID_HERE
 	```
 	**Voice Defaults:**
 	- `ELEVENLABS_VOICE_ID`: Arisa's voice (female) - defaults to "21m00Tcm4TlvDq8ikWAM" (Rachel)
-	- `ELEVENLABS_ASUKA_VOICE_ID`: Asuka's voice (male) - defaults to "nPczCjzI2devNBz1zQrb" (Brian)
+	- `ELEVENLABS_CHITOSE_VOICE_ID`: Chitose's voice (male) - defaults to "21m00Tcm4TlvDq8ikWAM" (Rachel)
 	
 	Find more voice IDs at [ElevenLabs Voice Library](https://elevenlabs.io/voice-library).
 

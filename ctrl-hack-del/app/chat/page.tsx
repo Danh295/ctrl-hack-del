@@ -94,16 +94,17 @@ export default function Home() {
     "Angry": -3      // Angry: -3x
   };
 
-  const ASUKA_EMOTION_MULTIPLIERS: Record<string, number> = {
-    "Smile": 3,      // Happy Sparkle: +3x
-    "Surprised": 2,  // Star Eyes: +2x
+  const CHITOSE_EMOTION_MULTIPLIERS: Record<string, number> = {
+    "Smile": 3,      // Happy: +3x
+    "Surprised": 2,  // Surprised: +2x
     "Normal": 1,     // Default calm expression: +1x (gradual growth)
-    "Sad": -0.5,     // Gloom: -0.5x
-    "Angry": -1      // Gloom (angry context): -1x
+    "Sad": -0.5,     // Sad: -0.5x
+    "Angry": -1,     // Angry: -1x
+    "Blushing": 2    // Blushing: +2x (special chitose emotion)
   };
 
-  const EMOTION_MULTIPLIERS = modelName === "asuka" 
-    ? ASUKA_EMOTION_MULTIPLIERS 
+  const EMOTION_MULTIPLIERS = modelName === "chitose" 
+    ? CHITOSE_EMOTION_MULTIPLIERS 
     : ARISA_EMOTION_MULTIPLIERS;
 
   const [input, setInput] = useState("");
@@ -265,7 +266,7 @@ export default function Home() {
         const timer = setTimeout(() => setActiveMilestone(null), 4000);
         // Trigger confession at 75
         if (milestone.threshold === 75) {
-          const confessionName = modelName === "arisa" ? "Arisa" : "Asuka";
+          const confessionName = modelName === "arisa" ? "Arisa" : "Chitose";
           setTimeout(() => {
             sendChatMessage(`[${confessionName} looks at you with a tender expression]`);
           }, 1500);
@@ -554,7 +555,7 @@ export default function Home() {
             <div className="chat-header-content">
               <div className="status-indicator" />
               <h1 className="chat-title">
-                {modelName === "arisa" ? "Arisa (your girlfriend)" : "Asuka (your boyfriend)"}
+                {modelName === "arisa" ? "Arisa (your girlfriend)" : "Chitose (your boyfriend)"}
               </h1>
             </div>
             <div className="header-currency">${currency}</div>
