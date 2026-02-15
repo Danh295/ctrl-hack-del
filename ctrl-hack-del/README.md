@@ -4,25 +4,26 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ### API Keys Setup
 
-Create a local env file and add your API keys:
+Create a `.env.local` file in the project root and add your API keys:
 
-1) Copy the example file:
-	- `.env.local.example` → `.env.local`
-2) Set the required values:
-	```
-	GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE
-	ELEVENLABS_API_KEY=YOUR_ELEVENLABS_API_KEY_HERE
-	```
-3) (Optional) Customize the voices:
-	```
-	ELEVENLABS_VOICE_ID=YOUR_ARISA_VOICE_ID_HERE
-	ELEVENLABS_CHITOSE_VOICE_ID=YOUR_CHITOSE_VOICE_ID_HERE
-	```
-	**Voice Defaults:**
-	- `ELEVENLABS_VOICE_ID`: Arisa's voice (female) - defaults to "21m00Tcm4TlvDq8ikWAM" (Rachel)
-	- `ELEVENLABS_CHITOSE_VOICE_ID`: Chitose's voice (male) - defaults to "21m00Tcm4TlvDq8ikWAM" (Rachel)
-	
-	Find more voice IDs at [ElevenLabs Voice Library](https://elevenlabs.io/voice-library).
+```env
+# Required API Keys
+GEMINI_API_KEY=your_gemini_api_key_here
+ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
+
+# Voice IDs for each character
+ELEVENLABS_VOICE_ID=cgSgspJ2msm6clMCkdW9
+ELEVENLABS_CHITOSE_VOICE_ID=SOYHLrjzK2X1ezoPC6cr
+```
+
+**Where to get API keys:**
+- **Gemini API**: Get your key at [Google AI Studio](https://aistudio.google.com/app/apikey)
+- **ElevenLabs API**: Get your key at [ElevenLabs](https://elevenlabs.io/app/settings/api-keys)
+- **Voice IDs**: Browse and clone voices at [ElevenLabs Voice Library](https://elevenlabs.io/app/voice-library)
+
+**Voice Configuration:**
+- `ELEVENLABS_VOICE_ID`: Voice for Arisa character (defaults to "21m00Tcm4TlvDq8ikWAM" if not set)
+- `ELEVENLABS_CHITOSE_VOICE_ID`: Voice for Chitose character (defaults to "21m00Tcm4TlvDq8ikWAM" if not set)
 
 **Note:** The chatbot will work without ElevenLabs API key, but text-to-speech will be disabled.
 
