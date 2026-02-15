@@ -44,7 +44,7 @@ export async function POST(req: Request) {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: "Missing GEMINI_API_KEY. Add it to .env.local." },
+        { error: "Missing GEMINI_API_KEY" },
         { status: 500 }
       );
     }
@@ -175,7 +175,7 @@ ${responseFormatInstructions}`;
     
     if (elevenLabsKey) {
       try {
-        console.log("🎤 Generating TTS audio...");
+        console.log("Generating TTS audio...");
         const client = new ElevenLabsClient({ apiKey: elevenLabsKey });
         
         const audio = await client.textToSpeech.convert(voiceId, {
@@ -201,13 +201,13 @@ ${responseFormatInstructions}`;
         
         const audioBuffer = Buffer.concat(chunks);
         audioBase64 = audioBuffer.toString("base64");
-        console.log("✅ TTS audio generated successfully");
+        console.log("TTS audio generated successfully");
       } catch (ttsError) {
-        console.error("❌ TTS generation error:", ttsError);
+        console.error("TTS generation error:", ttsError);
         // Continue without audio if TTS fails
       }
     } else {
-      console.warn("⚠️ ELEVENLABS_API_KEY not found in environment variables");
+      console.warn("ELEVENLABS_API_KEY not found in environment variables");
     }
 
     return NextResponse.json({ reply, expression, affectionChange, motion: motionTag, audio: audioBase64 });

@@ -6,7 +6,7 @@ export async function POST(req: Request) {
     const apiKey = process.env.ELEVENLABS_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: "Missing ELEVENLABS_API_KEY. Add it to .env.local." },
+        { error: "Missing ELEVENLABS_API_KEY" },
         { status: 500 }
       );
     }

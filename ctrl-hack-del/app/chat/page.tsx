@@ -458,7 +458,7 @@ export default function Home() {
 
   const playAudio = (base64Audio: string) => {
     try {
-      console.log("🔊 Attempting to play audio...");
+      console.log("Attempting to play audio...");
       
       // Stop current audio if playing
       if (audioRef.current) {
@@ -472,19 +472,19 @@ export default function Home() {
       audioRef.current = audio;
       
       audio.addEventListener('loadeddata', () => {
-        console.log("✅ Audio loaded successfully");
+        console.log("Audio loaded successfully");
       });
       
       audio.addEventListener('playing', () => {
-        console.log("▶️ Audio is playing");
+        console.log("Audio is playing");
       });
       
       audio.play().catch(err => {
-        console.error("❌ Audio playback failed:", err);
+        console.error("Audio playback failed:", err);
         alert("Audio playback failed. Please click anywhere on the page first to enable audio.");
       });
     } catch (error) {
-      console.error("❌ Audio creation failed:", error);
+      console.error("Audio creation failed:", error);
     }
   };
 
