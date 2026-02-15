@@ -1,4 +1,4 @@
-# AI Dating Simulator 💕
+# AI Dating Simulator
 
 A web-based dating simulator with an interactive 3D character model that speaks using AI-generated conversation (Gemini API) and realistic voice synthesis (ElevenLabs API) with synchronized lip movements.
 

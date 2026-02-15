@@ -15,10 +15,20 @@ interface Message {
   emotion?: string;
 }
 
-const MENU_ITEMS = [
-  { name: "Cappuccino", price: 7, image: "/menu/coffee.png", category: "Coffee", description: "Rich espresso topped with velvety steamed milk foam" },
-  { name: "Latte", price: 8, image: "/menu/latte.png", category: "Coffee", description: "Smooth espresso blended with creamy steamed milk" },
-  { name: "Black Coffee", price: 4, image: "/menu/plain_latte.png", category: "Coffee", description: "A classic brew to warm the heart" },
+interface MenuItem {
+  name: string;
+  price: number;
+  image: string;
+  category: string;
+  description: string;
+}
+
+const MENU_ITEMS: MenuItem[] = [
+  // Coffee
+  { name: "Cappuccino", price: 7, image: "/menu/latte.png", category: "Coffee", description: "Rich espresso topped with velvety steamed milk foam" },
+  { name: "Latte", price: 8, image: "/menu/plain_latte.png", category: "Coffee", description: "Smooth espresso blended with creamy steamed milk" },
+  { name: "Black Coffee", price: 4, image: "/menu/coffee.png", category: "Coffee", description: "A classic brew to warm the heart" },
+  // Tea
   { name: "Tea", price: 4, image: "/menu/tea.png", category: "Tea", description: "Delicate loose-leaf tea, steeped to perfection" },
   { name: "Matcha Latte", price: 7, image: "/menu/matcha_latte.png", category: "Tea", description: "Ceremonial-grade matcha whisked with frothy milk" },
   { name: "Strawberry Shortcake", price: 15, image: "/menu/shortcake.png", category: "Cakes", description: "Fluffy sponge layered with fresh strawberries and cream" },
@@ -66,11 +76,19 @@ export default function ChatPage() {
   const ARISA_EMOTION_MULTIPLIERS: Record<string, number> = {
     "Smile": 3, "Surprised": 2, "Normal": 0, "Sad": -0.5, "Angry": -3
   };
-  const ASUKA_EMOTION_MULTIPLIERS: Record<string, number> = {
-    "Smile": 3, "Surprised": 2, "Normal": 1, "Sad": -0.5, "Angry": -1
+
+  const CHITOSE_EMOTION_MULTIPLIERS: Record<string, number> = {
+    "Smile": 3,      // Happy: +3x
+    "Surprised": 2,  // Surprised: +2x
+    "Normal": 1,     // Default calm expression: +1x (gradual growth)
+    "Sad": -0.5,     // Sad: -0.5x
+    "Angry": -1,     // Angry: -1x
+    "Blushing": 2    // Blushing: +2x (special chitose emotion)
   };
 
-  const EMOTION_MULTIPLIERS = modelName === "asuka" ? ASUKA_EMOTION_MULTIPLIERS : ARISA_EMOTION_MULTIPLIERS;
+  const EMOTION_MULTIPLIERS = modelName === "chitose" 
+    ? CHITOSE_EMOTION_MULTIPLIERS 
+    : ARISA_EMOTION_MULTIPLIERS;
 
   const [input, setInput] = useState("");
   const [chatHistory, setChatHistory] = useState<Message[]>([]);
@@ -123,7 +141,7 @@ export default function ChatPage() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: messageText, history: historyForApi, model: modelName, affection }),
+        body: JSON.stringify({ message: messageText, history: historyForApi, model: modelName, affection, holdingHands }),
       });
 
       const data = await res.json();
@@ -202,9 +220,41 @@ export default function ChatPage() {
     sendChatMessage(`I just ordered ${item.name} for us!`);
   };
 
-  useEffect(() => { setTimeout(() => setIsLoading(false), 1500); }, []);
-  useEffect(() => { if (!isLoading) { setIsLoading(true); setTimeout(() => setIsLoading(false), 1500); } }, [isCafeDate]);
-  
+  // Initial loading screen
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Loading screen when switching backgrounds
+  useEffect(() => {
+    if (isLoading) return; // Skip on initial load
+    setIsLoading(true);
+    const timer = setTimeout(() => setIsLoading(false), 1500);
+    return () => clearTimeout(timer);
+  }, [isCafeDate]);
+
+  // Milestone detection
+  useEffect(() => {
+    for (const milestone of MILESTONES) {
+      if (affection >= milestone.threshold && !shownMilestones.includes(milestone.threshold)) {
+        setShownMilestones((prev) => [...prev, milestone.threshold]);
+        setActiveMilestone(milestone);
+        // Auto-dismiss after 4 seconds
+        const timer = setTimeout(() => setActiveMilestone(null), 4000);
+        // Trigger confession at 75
+        if (milestone.threshold === 75) {
+          const confessionName = modelName === "arisa" ? "Arisa" : "Chitose";
+          setTimeout(() => {
+            sendChatMessage(`[${confessionName} looks at you with a tender expression]`);
+          }, 1500);
+        }
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [affection]);
+
+  // Detect time of day
   useEffect(() => {
     const updateTimeOfDay = () => {
       const hour = new Date().getHours();
@@ -277,6 +327,7 @@ export default function ChatPage() {
             )}
           </>
         )}
+        <div className={`warmth-vignette ${holdingHands ? "active" : ""}`} />
       </section>
 
       <div className="affection-meter-container">
@@ -296,16 +347,36 @@ export default function ChatPage() {
 
       <section className="chat-section">
         <div className="chat-header">
-           <div className="chat-header-top">
-             <div className="chat-header-content">
-               <div className="status-indicator" />
-               <h1 className="chat-title">{modelName === "arisa" ? "Arisa" : "Asuka"}</h1>
-             </div>
-             <div className="header-currency">${currency}</div>
-           </div>
-           <div className="chat-header-actions">
-              <button className={`header-action-btn ${affection < CAFE_DATE_THRESHOLD && !isCafeDate ? 'locked' : ''}`} onClick={() => isCafeDate ? (setReceiptTimestamp(new Date()), setShowReceipt(true)) : (affection >= CAFE_DATE_THRESHOLD && setIsCafeDate(true))}>
-                {isCafeDate ? 'Back' : affection >= CAFE_DATE_THRESHOLD ? 'Cafe Date' : `🔒 ${CAFE_DATE_THRESHOLD}%`}
+          <div className="chat-header-top">
+            <div className="chat-header-content">
+              <div className="status-indicator" />
+              <h1 className="chat-title">
+                {modelName === "arisa" ? "Arisa (your girlfriend)" : "Chitose (your boyfriend)"}
+              </h1>
+            </div>
+            <div className="header-currency">${currency}</div>
+          </div>
+          <div className="chat-header-actions">
+            <button
+              className={`header-action-btn ${affection < CAFE_DATE_THRESHOLD && !isCafeDate ? 'locked' : ''}`}
+              onClick={() => {
+                if (isCafeDate) {
+                  setReceiptTimestamp(new Date());
+                  setShowReceipt(true);
+                } else if (affection >= CAFE_DATE_THRESHOLD) {
+                  setIsCafeDate(true);
+                }
+              }}
+              title={affection < CAFE_DATE_THRESHOLD && !isCafeDate ? `Affection must be ${CAFE_DATE_THRESHOLD}+ to unlock` : ''}
+            >
+              {isCafeDate ? 'Back Home' : affection >= CAFE_DATE_THRESHOLD ? 'Cafe Date' : `🔒 ${CAFE_DATE_THRESHOLD}%`}
+            </button>
+            {isCafeDate && (
+              <button
+                className="header-action-btn"
+                onClick={() => setShowMenu(true)}
+              >
+                Menu
               </button>
               {isCafeDate && <button className="header-action-btn" onClick={() => setShowMenu(true)}>Menu</button>}
               {affection >= 75 && <button className={`header-action-btn ${holdingHands ? "active-hands" : ""}`} onClick={() => setHoldingHands(!holdingHands)}>{holdingHands ? "🤝" : "🫱"}</button>}
@@ -342,19 +413,66 @@ export default function ChatPage() {
       {showMenu && (
         <div className="menu-overlay" onClick={() => setShowMenu(false)}>
           <div className="menu-panel" onClick={(e) => e.stopPropagation()}>
-             <div className="menu-banner"><img src="/menu/menupage.png" alt="Menu" /><button className="menu-close" onClick={() => setShowMenu(false)}>✕</button></div>
-             <div className="menu-tabs">{MENU_CATEGORIES.map(cat => <button key={cat} className={`menu-tab ${menuTab === cat ? "active" : ""}`} onClick={() => setMenuTab(cat)}>{cat}</button>)}</div>
-             <div className="menu-items">
-               {MENU_ITEMS.filter(i => i.category === menuTab).map(item => (
-                 <div key={item.name} className={`menu-item-card ${orderedItems.includes(item.name) ? "ordered" : ""}`}>
-                   <img src={item.image} alt={item.name} />
-                   <div className="menu-item-info"><span>{item.name}</span><span>${item.price}</span></div>
-                   <button className="order-btn" onClick={() => handlePurchase(item)} disabled={availableBalance < getEffectiveCost(item) && !orderedItems.includes(item.name)}>
-                     {orderedItems.includes(item.name) ? "Ordered" : "Order"}
-                   </button>
-                 </div>
-               ))}
-             </div>
+            {/* Order header */}
+            <div className="menu-header">
+              <div className="menu-header-text">
+                <h2 className="menu-title">Place an Order</h2>
+                <p className="menu-subtitle">Pick a drink and a treat for your date</p>
+              </div>
+              <button className="menu-close" onClick={() => setShowMenu(false)}>✕</button>
+            </div>
+
+            {/* Currency display */}
+            <div className="menu-currency">
+              <span className="menu-currency-label">Available to spend</span>
+              <span className="menu-currency-value">${availableBalance}</span>
+            </div>
+
+            {/* Tab navigation */}
+            <div className="menu-tabs">
+              {MENU_CATEGORIES.map((cat) => (
+                <button
+                  key={cat}
+                  className={`menu-tab ${menuTab === cat ? "active" : ""}`}
+                  onClick={() => setMenuTab(cat)}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
+            {/* Item grid */}
+            <div className="menu-items">
+              {MENU_ITEMS.filter((item) => item.category === menuTab).map((item) => {
+                const isOrdered = orderedItems.includes(item.name);
+                const canAfford = availableBalance >= getEffectiveCost(item);
+                return (
+                  <div
+                    key={item.name}
+                    className={`menu-item-card ${isOrdered ? "ordered" : ""} ${!canAfford && !isOrdered ? "cant-afford" : ""}`}
+                  >
+                    {isOrdered && <span className="on-table-badge">On table</span>}
+                    <div className="menu-item-image">
+                      <img src={item.image} alt={item.name} />
+                    </div>
+                    <div className="menu-item-info">
+                      <span className="menu-item-name">{item.name}</span>
+                      <span className="menu-item-desc">{item.description}</span>
+                      <span className="menu-item-price">${item.price}</span>
+                    </div>
+                    {!isOrdered && (
+                      <button
+                        className={`order-btn ${!canAfford ? "disabled" : ""}`}
+                        onClick={() => handlePurchase(item)}
+                        disabled={!canAfford}
+                      >
+                        {canAfford ? "Order" : "Not enough $"}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

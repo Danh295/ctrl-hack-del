@@ -58,9 +58,11 @@ export default function ModelCanvas({ emotion, model: modelName, audioSrc }: Mod
         });
         appRef.current = app;
 
-        const modelFolder = modelName === "asuka" ? "asuka" : "01arisa";
-        const modelFile = modelName === "asuka" ? "asuka.model3.json" : "arisa_t11.model3.json";
-        const modelPath = `/models/${modelFolder}/${modelFile}`;
+        // 4. Load Model
+        const modelPath = model === "chitose" 
+          ? "/models/06chitose/chitose_t02.model3.json"
+          : "/models/01arisa/arisa_t11.model3.json";
+        const loadedModel = await Live2DModel.from(modelPath);
 
         const model = await Live2DModel.from(modelPath);
 
@@ -118,6 +120,34 @@ export default function ModelCanvas({ emotion, model: modelName, audioSrc }: Mod
       const expId = expressionMap[emotion] || 'f01';
       if (modelRef.current.expression) {
         modelRef.current.expression(expId);
+      try {
+        // Map emotions to expression files based on model
+        const arisaExpressions: Record<string, string> = {
+          'Angry': 'Angry',
+          'Sad': 'Sad',
+          'Smile': 'Smile',
+          'Surprised': 'Surprised',
+          'Normal': 'Normal'
+        };
+
+        const chitoseExpressions: Record<string, string> = {
+          'Angry': 'Angry',
+          'Sad': 'Sad',
+          'Smile': 'Smile',
+          'Surprised': 'Surprised',
+          'Normal': 'Normal',
+          'Blushing': 'Blushing'
+        };
+        
+        const expressionFiles = model === "chitose" ? chitoseExpressions : arisaExpressions;
+        const expName = expressionFiles[emotion];
+        
+        // Only set expression if it exists in the mapping
+        if (expName && modelRef.current.expression) {
+          modelRef.current.expression(expName);
+        }
+      } catch (e) {
+        console.error('Failed to set expression:', e);
       }
     }
   }, [emotion]);

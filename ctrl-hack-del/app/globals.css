@@ -884,8 +884,8 @@ body {
   background: linear-gradient(135deg, #FDF2F5 0%, #F8E8EE 50%, #E7A6B3 100%);
 }
 
-.asuka-card:hover {
-  background: linear-gradient(135deg, #E8F4FD 0%, #D4E9F7 50%, #A6C9E7 100%);
+.chitose-card:hover {
+  background: linear-gradient(135deg, #F0E8FD 0%, #E7D4F7 50%, #C9A6E7 100%);
 }
 
 .random-card:hover {
@@ -1254,29 +1254,46 @@ body {
   }
 }
 
-/* Banner */
-.menu-banner {
+/* Header */
+.menu-header {
   position: relative;
-  width: 100%;
-  flex-shrink: 0;
-  background: #f5ede3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.25rem 1rem;
+  background: linear-gradient(135deg, #f5ede3, #faf5ef);
   border-bottom: 1px solid rgba(92, 58, 74, 0.1);
+  flex-shrink: 0;
 }
 
-.menu-banner img {
-  width: 100%;
-  display: block;
+.menu-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.menu-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--warm-plum);
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
+.menu-subtitle {
+  font-size: 0.8rem;
+  color: var(--warm-plum);
+  opacity: 0.6;
+  margin: 0;
+  font-weight: 400;
 }
 
 .menu-close {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
   border: none;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(92, 58, 74, 0.1);
   color: var(--warm-plum);
   font-size: 1rem;
   cursor: pointer;
@@ -1284,7 +1301,7 @@ body {
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
 }
 
 .menu-close:hover {
@@ -1608,6 +1625,26 @@ body {
   color: white !important;
   border-color: #ff8fa3 !important;
   box-shadow: 0 0 12px rgba(255, 143, 163, 0.4);
+}
+
+.warmth-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.7s ease;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 40%,
+    rgba(231, 166, 179, 0.15) 65%,
+    rgba(216, 140, 160, 0.30) 80%,
+    rgba(92, 58, 74, 0.20) 100%
+  );
+}
+
+.warmth-vignette.active {
+  opacity: 1;
 }
 
 /* =================== MILESTONE TOAST =================== */
