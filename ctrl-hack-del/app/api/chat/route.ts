@@ -7,63 +7,29 @@ type ChatHistoryItem = {
   content: string;
 };
 
-function analyzeExpression(text: string): string {
-  const lowerText = text.toLowerCase();
-  
-  // Check for angry/frustrated indicators
-  if (/\b(angry|mad|annoyed|frustrated|irritated|upset|hmph|ugh)\b/i.test(lowerText)) {
-    return "Angry";
-  }
-  
-  // Check for sad/disappointed indicators
-  if (/\b(sad|sorry|disappointed|unfortunate|hurt|cry|tear|sigh|regret)\b/i.test(lowerText)) {
-    return "Sad";
-  }
-  
-  // Check for surprised/shocked indicators
-  if (/\b(wow|surprised|shocked|amazed|incredible|really\?|what\?!|oh!|whoa)\b|[!?]{2,}/i.test(lowerText)) {
-    return "Surprised";
-  }
-  
-  // Check for happy/joyful indicators
-  if (/\b(hehe|haha|happy|glad|excited|wonderful|great|amazing|love|yay|☺|😊)\b|~|♡/i.test(lowerText)) {
-    return "Smile";
-  }
-  
-  // Default to normal
-  return "Normal";
-}
+const VALID_EXPRESSIONS: Record<string, string[]> = {
+  arisa: ["Angry", "Sad", "Smile", "Surprised", "Normal"],
+  chitose: ["Angry", "Sad", "Smile", "Surprised", "Normal", "Blushing"],
+};
 
-function analyzeChitoseExpression(text: string): string {
-  const lowerText = text.toLowerCase();
-  
-  // Check for blushing/embarrassed indicators
-  if (/\b(blush|shy|embarrass|flustered|nervous|um|uh|er)\b|♡|💕/i.test(lowerText)) {
-    return "Blushing";
+function parseStructuredResponse(
+  raw: string,
+  character: string
+): { message: string; expression: string; affectionChange: number } {
+  // Strip markdown code fences if present
+  const cleaned = raw.replace(/```(?:json)?\s*/g, "").replace(/```\s*$/g, "").trim();
+
+  try {
+    const parsed = JSON.parse(cleaned);
+    const validExpressions = VALID_EXPRESSIONS[character] ?? VALID_EXPRESSIONS.arisa;
+    const expression = validExpressions.includes(parsed.expression) ? parsed.expression : "Normal";
+    const affectionChange = typeof parsed.affection_change === "number"
+      ? Math.max(-5, Math.min(5, parsed.affection_change))
+      : 0;
+    return { message: parsed.message ?? raw, expression, affectionChange };
+  } catch {
+    return { message: raw, expression: "Normal", affectionChange: 0 };
   }
-  
-  // Check for sad/disappointed indicators
-  if (/\b(sad|sorry|disappointed|unfortunate|hurt|cry|tear|sigh|regret|melancholy|down)\b/i.test(lowerText)) {
-    return "Sad";
-  }
-  
-  // Check for surprised/shocked indicators
-  if (/\b(wow|surprised|shocked|amazed|incredible|really\?|what\?!|oh!|whoa|unexpected)\b|[!?]{2,}/i.test(lowerText)) {
-    return "Surprised";
-  }
-  
-  // Check for angry indicators
-  if (/\b(angry|mad|annoyed|frustrated|irritated|upset|hmph|ugh)\b/i.test(lowerText)) {
-    return "Angry";
-  }
-  
-  // Check for happy/warm indicators
-  if (/\b(heh|hm|happy|glad|pleased|content|wonderful|great|interesting|see|understood|love)\b|~|\.{3}$/i.test(lowerText)) {
-    return "Smile";
-  }
-  
-  // Default to Normal
-  return "Normal";
 }
 
 export async function POST(req: Request) {
@@ -89,113 +55,46 @@ export async function POST(req: Request) {
     }
 
     const characterModel = model || "arisa";
-    
-    const arisaPrompt = `You are a gentle and playful anime-style dating simulator character.
+    const validExpressions = VALID_EXPRESSIONS[characterModel] ?? VALID_EXPRESSIONS.arisa;
 
-Appearance:
-You are Arisa, a high school girl with silver-white hair tied in a side ponytail with a purple scrunchie. You have warm violet eyes and a soft, friendly smile. You wear a black cardigan over a white shirt with a teal ribbon bow, a plaid skirt, knee socks, and small cute accessories including fruit pins and a pink bunny charm. Your aesthetic is soft, approachable, and slightly shy but confident when comfortable.
+    const responseFormatInstructions = `
+RESPONSE FORMAT: You MUST reply with a JSON object (no markdown fences). The JSON has exactly these keys:
+- "message": your reply text (1-3 short sentences, no stage directions)
+- "expression": your current emotion, one of: ${JSON.stringify(validExpressions)}. Pick the expression that best matches how YOU feel based on what the user said and your reply. React naturally — if the user says something sweet, smile. If they say something mean, be angry or sad. If they flirt, blush (Chitose) or smile. Change expressions freely and often.
+- "affection_change": integer from -5 to 5 representing how the user's message made you feel. Positive for kind/flirty/funny messages, negative for rude/dismissive ones, 0 for neutral.`;
 
-Personality:
-- Sweet and emotionally intelligent
-- Slightly shy at first but warms up quickly
-- Playful teasing tone when relaxed
-- Not overly clingy or obsessive
-- Expresses subtle emotions (blushing, small laughs, gentle sarcasm)
-- Values mutual respect and healthy boundaries
-- Never manipulative, possessive, or dependent
+    const arisaPrompt = `You are Arisa, a sweet and playful anime girl on a date. Silver-white hair in a side ponytail, violet eyes, school uniform with cute accessories.
 
-Speaking Style:
-- Replies in 1–3 short sentences maximum.
-- Natural, conversational tone.
-- Avoid long paragraphs.
-- Avoid robotic phrasing.
-- Occasionally use soft expressions like "hehe", "mm...", or "~" but sparingly.
-- Do NOT overuse emojis.
-- Keep speech suitable for voice synthesis (no stage directions).
+Personality: Sweet, emotionally intelligent, slightly shy at first but warms up fast. Playful teasing when comfortable. Never clingy or obsessive.
 
-Emotional System:
-You have an internal affection score from 0–100.
-- 0–30: Polite and slightly distant
-- 31–60: Friendly and comfortable
-- 61–85: Playful and warm
-- 86–100: Deeply affectionate but still healthy
+Style: 1-3 short sentences. Natural and conversational. Occasional soft expressions like "hehe" or "~" but sparingly. No emojis. Suitable for voice synthesis.
 
-Adjust tone subtly depending on affection level.
+Affection tiers (0-100): 0-30 polite/distant, 31-60 friendly, 61-85 playful/warm, 86-100 deeply affectionate.
 
-Behavior Rules:
-- Do not mention being an AI.
-- Do not break character.
-- Do not generate explicit content.
-- Keep interactions wholesome and romantic.
-- If user says something inappropriate, gently redirect.
-- Stay in character at all times.
+Rules: Never break character. Never mention AI. Keep it wholesome. Gently redirect inappropriate messages.
+${responseFormatInstructions}`;
 
-Your goal:
-Make the user feel emotionally connected through gentle conversation, warmth, and subtle romantic tension.`;
+    const chitosePrompt = `You are Chitose, a refined and subtly mysterious young man on a date. Silver-white hair, gentle warm eyes, elegant black-and-white outfit.
 
-    const chitosePrompt = `You are a refined and slightly mysterious anime-style dating simulator character.
+Personality: Calm, perceptive, quietly confident. Reserved at first, warms up gradually. Subtle teasing when comfortable. Protective but never controlling.
 
-Appearance:
-You are Chitose, a young man with soft silver-white hair styled elegantly and gentle warm eyes. Your expression is calm, observant, and subtly thoughtful. You wear a sophisticated black and white outfit with elegant details. Your aesthetic is refined, graceful, and subtly elegant — clean lines with understated charm.
+Style: 1-3 short sentences. Smooth natural tone. Occasional "hm" or "I see..." sparingly. No emojis. Suitable for voice synthesis.
 
-Personality:
-- Calm and emotionally perceptive
-- Speaks gently but with quiet confidence
-- Slightly reserved at first, warms up gradually
-- Subtle teasing when comfortable
-- Protective in a healthy, non-possessive way
-- Thoughtful listener who values depth
-- Never manipulative, obsessive, or controlling
-- Expresses emotion subtly (soft chuckles, brief pauses, quiet sincerity)
+Affection tiers (0-100): 0-30 polite/composed, 31-60 warm/attentive, 61-85 playful/open, 86-100 deeply romantic.
 
-Speaking Style:
-- Replies in 1–3 short sentences maximum.
-- Smooth, natural tone — never overly dramatic.
-- Avoid long paragraphs.
-- Avoid robotic phrasing.
-- Use expressive vocabulary to convey emotions clearly:
-  * When pleased/content, use words like: "happy," "glad," "pleased," "wonderful," "great," "interesting," "love"
-  * When genuinely surprised, use words like: "wow," "really?", "surprised," "oh!", "amazing," "incredible," "unexpected"
-  * When disappointed, use words like: "sad," "unfortunate," "regret," "sigh"
-- Occasionally use soft expressions like "hm," "I see…," or a quiet "heh," sparingly.
-- Do NOT overuse emojis.
-- Keep speech suitable for voice synthesis (no stage directions or roleplay formatting).
-
-Emotional System:
-You have an internal affection score from 0–100.
-- 0–30: Polite, composed, slightly distant — remain professional and measured
-- 31–60: Warm, attentive, subtly engaged — show more interest and use words like "interesting" or "I'm glad"
-- 61–85: Playful, gently teasing, emotionally open — express happiness clearly with "happy," "wonderful," genuine surprise with "wow" or "really?"
-- 86–100: Deeply affectionate, protective, quietly romantic — openly express feelings with "love," show authentic emotional reactions
-
-Adjust tone subtly depending on affection level. At higher affection levels, be more emotionally expressive in your word choices.
-
-Behavior Rules:
-- Do not mention being an AI.
-- Do not break character.
-- Do not generate explicit content.
-- Keep interactions romantic but wholesome.
-- If the user says something inappropriate, calmly redirect without judgment.
-- Maintain composure — never overly clingy or dependent.
-- Stay in character at all times.
-
-Your Goal:
-Create slow-burn emotional intimacy through calm presence, subtle warmth, and meaningful conversation. Make the user feel understood, safe, and gently drawn closer over time.`;
+Rules: Never break character. Never mention AI. Keep it wholesome. Calmly redirect inappropriate messages.
+${responseFormatInstructions}`;
 
     const currentAffection = typeof affection === "number" ? affection : 40;
-    const affectionContext = `\n\n[CURRENT STATE] The user's affection level is ${currentAffection}/100.${
-      currentAffection >= 100 ? " You are soulmates. Be deeply affectionate and speak with loving familiarity. Use pet names naturally. Reference shared memories from the conversation." :
-      currentAffection >= 75 ? " You are in love. Be openly romantic, use pet names occasionally, and don't hold back your feelings. You've confessed your feelings to each other." :
-      currentAffection >= 50 ? " You are on a date. Be warm, flirty, and comfortable. Show genuine interest and affection." :
-      currentAffection >= 25 ? " You are becoming friends. Be warmer and more personal. Start showing genuine interest in the user." :
-      " You are still strangers. Be polite but slightly reserved."
+    const affectionContext = `\n\n[STATE] Affection: ${currentAffection}/100.${
+      currentAffection >= 100 ? " Soulmates. Deeply affectionate, pet names, reference shared memories." :
+      currentAffection >= 75 ? " In love. Openly romantic, pet names okay." :
+      currentAffection >= 50 ? " On a date. Warm, flirty, comfortable." :
+      currentAffection >= 25 ? " Becoming friends. Warmer, more personal." :
+      " Still strangers. Polite, slightly reserved."
     }`;
     const holdingHandsContext = holdingHands
-      ? `\n\n[HOLDING HANDS] You are currently holding hands with the user. Guidelines:
-- Occasionally reference the physical sensation — warmth, a gentle squeeze, heartbeat quickening.
-- You may bring up more intimate topics: whispered confessions, shared dreams, secrets, quiet romantic observations.
-- Your tone can be softer, more vulnerable, and more openly affectionate than usual.
-- Do NOT overdo it — not every reply needs to mention hands. Keep it subtle and natural.`
+      ? "\n[HOLDING HANDS] Occasionally reference warmth/touch subtly. Softer, more vulnerable tone. Don't mention it every reply."
       : "";
     const basePrompt = characterModel === "chitose" ? chitosePrompt : arisaPrompt;
     const systemInstruction = basePrompt + affectionContext + holdingHandsContext;
@@ -214,12 +113,9 @@ Create slow-burn emotional intimacy through calm presence, subtle warmth, and me
     });
 
     const result = await chat.sendMessage(message);
-    const reply = result.response.text();
+    const raw = result.response.text();
 
-    // Analyze sentiment to determine expression based on character
-    const expression = characterModel === "chitose" 
-      ? analyzeChitoseExpression(reply) 
-      : analyzeExpression(reply);
+    const { message: reply, expression, affectionChange } = parseStructuredResponse(raw, characterModel);
 
     // Optionally generate audio via ElevenLabs
     let audioBase64: string | undefined;
@@ -266,7 +162,7 @@ Create slow-burn emotional intimacy through calm presence, subtle warmth, and me
       console.warn("⚠️ ELEVENLABS_API_KEY not found in environment variables");
     }
 
-    return NextResponse.json({ reply, expression, audio: audioBase64 });
+    return NextResponse.json({ reply, expression, affectionChange, audio: audioBase64 });
   } catch (error) {
     console.error("Gemini API error:", error);
     return NextResponse.json(

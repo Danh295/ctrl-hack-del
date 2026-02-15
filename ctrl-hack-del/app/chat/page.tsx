@@ -171,16 +171,23 @@ export default function Home() {
 
       const replyText = data?.reply || "(No response)";
       const expression = data?.expression || "Normal";
+      const aiAffectionChange = data?.affectionChange;
       const audioBase64 = data?.audio;
 
       setChatHistory((prev) => [...prev, { role: "ai", text: replyText, emotion: expression }]);
       setCurrentEmotion(expression);
 
-      const multiplier = EMOTION_MULTIPLIERS[expression] ?? 0;
-      if (multiplier !== 0) {
+      // Use AI-determined affection change if available, otherwise fall back to multiplier
+      if (typeof aiAffectionChange === "number" && aiAffectionChange !== 0) {
         const handsBonus = holdingHands ? 1.5 : 1;
-        const change = AFFECTION_BASE_CHANGE * multiplier * handsBonus;
-        setAffection((prev) => Math.max(0, Math.min(100, prev + change)));
+        setAffection((prev) => Math.max(0, Math.min(100, prev + aiAffectionChange * handsBonus)));
+      } else {
+        const multiplier = EMOTION_MULTIPLIERS[expression] ?? 0;
+        if (multiplier !== 0) {
+          const handsBonus = holdingHands ? 1.5 : 1;
+          const change = AFFECTION_BASE_CHANGE * multiplier * handsBonus;
+          setAffection((prev) => Math.max(0, Math.min(100, prev + change)));
+        }
       }
 
       if (audioBase64 && isAudioEnabled) {
