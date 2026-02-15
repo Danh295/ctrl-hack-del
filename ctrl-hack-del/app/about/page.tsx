@@ -42,9 +42,9 @@ export default function AboutPage() {
               </p>
             </div>
             <div className="companion-info">
-              <h3 className="companion-name">Asuka</h3>
+              <h3 className="companion-name">Chitose</h3>
               <p className="companion-description">
-                A charming and adventurous companion with a cool demeanor and warm heart. Asuka brings excitement and genuine care to every interaction.
+                A charming and adventurous companion with a cool demeanor and warm heart. Chitose brings excitement and genuine care to every interaction.
               </p>
             </div>
           </div>
