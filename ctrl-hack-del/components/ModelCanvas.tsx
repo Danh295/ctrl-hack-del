@@ -10,15 +10,19 @@ if (typeof window !== "undefined") {
 interface ModelCanvasProps {
   emotion: string;
   model?: string; // "arisa" or "chitose"
+  affection?: number;
+  motion?: string | null;
 }
 
-export default function ModelCanvas({ emotion, model = "arisa" }: ModelCanvasProps) {
+export default function ModelCanvas({ emotion, model = "arisa", affection = 40, motion = null }: ModelCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const modelRef = useRef<any>(null);
+  const [modelReady, setModelReady] = useState(false);
 
   useEffect(() => {
     if (!canvasRef.current) return;
     let app: PIXI.Application | null = null;
+    setModelReady(false);
 
     // --- HELPER: Manually load a script tag ---
     const loadScript = (src: string) => {
@@ -55,7 +59,7 @@ export default function ModelCanvas({ emotion, model = "arisa" }: ModelCanvasPro
         });
 
         // 4. Load Model
-        const modelPath = model === "chitose" 
+        const modelPath = model === "chitose"
           ? "/models/06chitose/chitose_t02.model3.json"
           : "/models/01arisa/arisa_t11.model3.json";
         const loadedModel = await Live2DModel.from(modelPath);
@@ -74,6 +78,7 @@ export default function ModelCanvas({ emotion, model = "arisa" }: ModelCanvasPro
         loadedModel.anchor.set(0.5, 0.5);
 
         loadedModel.motion('Idle');
+        setModelReady(true);
 
       } catch (e) {
         console.error(e);
@@ -87,11 +92,11 @@ export default function ModelCanvas({ emotion, model = "arisa" }: ModelCanvasPro
     };
   }, [model]); // Re-run when model changes
 
-  // Emotion Switcher - Use actual expression file names
+  // Emotion Switcher - Use actual expression file names from model3.json
   useEffect(() => {
-    if (modelRef.current && emotion) {
+    if (modelRef.current && emotion && modelReady) {
       try {
-        // Map emotions to expression files based on model
+        // Arisa: expression names match directly (no suffix in model3.json)
         const arisaExpressions: Record<string, string> = {
           'Angry': 'Angry',
           'Sad': 'Sad',
@@ -100,18 +105,20 @@ export default function ModelCanvas({ emotion, model = "arisa" }: ModelCanvasPro
           'Normal': 'Normal'
         };
 
+        // Chitose: expression names in model3.json include ".exp3.json" suffix
         const chitoseExpressions: Record<string, string> = {
-          'Angry': 'Angry',
-          'Sad': 'Sad',
-          'Smile': 'Smile',
-          'Surprised': 'Surprised',
-          'Normal': 'Normal',
-          'Blushing': 'Blushing'
+          'Angry': 'Angry.exp3.json',
+          'Sad': 'Sad.exp3.json',
+          'Smile': 'Smile.exp3.json',
+          'Surprised': 'Surprised.exp3.json',
+          'Normal': 'Normal.exp3.json',
+          'Blushing': 'Blushing.exp3.json',
+          'Nervous': 'f01.exp3.json'
         };
-        
+
         const expressionFiles = model === "chitose" ? chitoseExpressions : arisaExpressions;
         const expName = expressionFiles[emotion];
-        
+
         // Only set expression if it exists in the mapping
         if (expName && modelRef.current.expression) {
           modelRef.current.expression(expName);
@@ -120,7 +127,33 @@ export default function ModelCanvas({ emotion, model = "arisa" }: ModelCanvasPro
         console.error('Failed to set expression:', e);
       }
     }
-  }, [emotion, model]);
+  }, [emotion, model, modelReady]);
+
+  // Motion trigger - play a motion when the prop changes
+  useEffect(() => {
+    if (!modelRef.current || !motion || !modelReady) return;
+
+    try {
+      // Map semantic motion names to actual motion groups in model3.json
+      if (model === "arisa") {
+        if (motion === "tap") {
+          // Arisa: "" group contains Tap@body.motion3.json
+          modelRef.current.motion('', 0);
+        }
+      } else if (model === "chitose") {
+        if (motion === "wave") {
+          // Chitose: "Flick" group contains chitose_handwave
+          modelRef.current.motion('Flick', 0);
+        } else if (motion === "pose") {
+          // Chitose: "Tap" group contains kime01/kime02
+          const index = Math.random() < 0.5 ? 0 : 1;
+          modelRef.current.motion('Tap', index);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to play motion:', e);
+    }
+  }, [motion, model, modelReady]);
 
   return (
     <div className="w-full h-full relative flex items-center justify-center">

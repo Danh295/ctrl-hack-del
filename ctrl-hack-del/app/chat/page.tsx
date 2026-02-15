@@ -100,7 +100,8 @@ export default function Home() {
     "Normal": 1,     // Default calm expression: +1x (gradual growth)
     "Sad": -0.5,     // Sad: -0.5x
     "Angry": -1,     // Angry: -1x
-    "Blushing": 2    // Blushing: +2x (special chitose emotion)
+    "Blushing": 2,   // Blushing: +2x (special chitose emotion)
+    "Nervous": 1.5   // Nervous/flustered: +1.5x
   };
 
   const EMOTION_MULTIPLIERS = modelName === "chitose" 
@@ -131,6 +132,14 @@ export default function Home() {
   const [holdingHands, setHoldingHands] = useState(false);
   const stage = getRelationshipStage(affection);
 
+  // Auto-message / idle detection state
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [consecutiveAutoMsgs, setConsecutiveAutoMsgs] = useState(0);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  // Motion state for Live2D model
+  const [pendingMotion, setPendingMotion] = useState<string | null>(null);
+
   // Menu system state
   const [currency, setCurrency] = useState(50);
   const [orderedItems, setOrderedItems] = useState<string[]>([]);
@@ -146,6 +155,42 @@ export default function Home() {
       fontSize: `${1 + Math.random() * 1.2}rem`,
     })),
   []);
+
+  // Affection-based expression override: ensures the model's face
+  // matches the relationship level even if the AI picks an off-tone expression
+  const getEffectiveExpression = (expression: string, aff: number): string => {
+    // Very low affection: force negative expressions
+    if (aff < 15) {
+      if (["Smile", "Blushing", "Nervous", "Surprised"].includes(expression)) {
+        return Math.random() < 0.6 ? "Angry" : "Sad";
+      }
+      if (expression === "Normal") return Math.random() < 0.4 ? "Sad" : "Normal";
+      return expression;
+    }
+    // Low affection: suppress positive expressions
+    if (aff < 30) {
+      if (["Smile", "Blushing", "Nervous"].includes(expression)) return "Normal";
+      return expression;
+    }
+    // Medium-low: block blushing/nervous, allow smile
+    if (aff < 50) {
+      if (["Blushing", "Nervous"].includes(expression)) return "Normal";
+      return expression;
+    }
+    // High affection: boost positive expressions
+    if (aff >= 85) {
+      if (expression === "Normal") return Math.random() < 0.6 ? "Smile" : "Normal";
+      if (expression === "Smile" && modelName === "chitose") {
+        return Math.random() < 0.35 ? "Blushing" : "Smile";
+      }
+      return expression;
+    }
+    if (aff >= 70) {
+      if (expression === "Normal") return Math.random() < 0.4 ? "Smile" : "Normal";
+      return expression;
+    }
+    return expression;
+  };
 
   const sendChatMessage = async (messageText: string) => {
     const userMsg: Message = { role: "user", text: messageText };
@@ -170,19 +215,27 @@ export default function Home() {
       }
 
       const replyText = data?.reply || "(No response)";
-      const expression = data?.expression || "Normal";
+      const rawExpression = data?.expression || "Normal";
+      const effectiveExpression = getEffectiveExpression(rawExpression, affection);
       const aiAffectionChange = data?.affectionChange;
+      const motionTag = data?.motion;
       const audioBase64 = data?.audio;
 
-      setChatHistory((prev) => [...prev, { role: "ai", text: replyText, emotion: expression }]);
-      setCurrentEmotion(expression);
+      setChatHistory((prev) => [...prev, { role: "ai", text: replyText, emotion: effectiveExpression }]);
+      setCurrentEmotion(effectiveExpression);
+
+      // Trigger motion if returned
+      if (motionTag && motionTag !== "none") {
+        setPendingMotion(motionTag);
+        setTimeout(() => setPendingMotion(null), 2000);
+      }
 
       // Use AI-determined affection change if available, otherwise fall back to multiplier
       if (typeof aiAffectionChange === "number" && aiAffectionChange !== 0) {
         const handsBonus = holdingHands ? 1.5 : 1;
         setAffection((prev) => Math.max(0, Math.min(100, prev + aiAffectionChange * handsBonus)));
       } else {
-        const multiplier = EMOTION_MULTIPLIERS[expression] ?? 0;
+        const multiplier = EMOTION_MULTIPLIERS[effectiveExpression] ?? 0;
         if (multiplier !== 0) {
           const handsBonus = holdingHands ? 1.5 : 1;
           const change = AFFECTION_BASE_CHANGE * multiplier * handsBonus;
@@ -200,6 +253,62 @@ export default function Home() {
         { role: "ai", text: "⚠️ Gemini is unavailable. Check your API key and try again." },
       ]);
       setCurrentEmotion("Normal");
+    } finally {
+      setIsThinking(false);
+    }
+  };
+
+  const sendAutoMessage = async () => {
+    setIsThinking(true);
+    try {
+      const historyForApi = chatHistory.map((msg) => ({
+        role: msg.role === "user" ? "user" : "model",
+        content: msg.text,
+      }));
+
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ autoMessage: true, history: historyForApi, model: modelName, affection, holdingHands }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Auto-message failed");
+
+      const replyText = data?.reply || "(No response)";
+      const rawExpression = data?.expression || "Normal";
+      const effectiveExpression = getEffectiveExpression(rawExpression, affection);
+      const aiAffectionChange = data?.affectionChange;
+      const motionTag = data?.motion;
+      const audioBase64 = data?.audio;
+
+      setChatHistory((prev) => [...prev, { role: "ai", text: replyText, emotion: effectiveExpression }]);
+      setCurrentEmotion(effectiveExpression);
+      setConsecutiveAutoMsgs((prev) => prev + 1);
+
+      // Trigger motion if returned
+      if (motionTag && motionTag !== "none") {
+        setPendingMotion(motionTag);
+        setTimeout(() => setPendingMotion(null), 2000);
+      }
+
+      if (typeof aiAffectionChange === "number" && aiAffectionChange !== 0) {
+        const handsBonus = holdingHands ? 1.5 : 1;
+        setAffection((prev) => Math.max(0, Math.min(100, prev + aiAffectionChange * handsBonus)));
+      } else {
+        const multiplier = EMOTION_MULTIPLIERS[effectiveExpression] ?? 0;
+        if (multiplier !== 0) {
+          const handsBonus = holdingHands ? 1.5 : 1;
+          const change = AFFECTION_BASE_CHANGE * multiplier * handsBonus;
+          setAffection((prev) => Math.max(0, Math.min(100, prev + change)));
+        }
+      }
+
+      if (audioBase64 && isAudioEnabled) {
+        playAudio(audioBase64);
+      }
+    } catch {
+      // Silently swallow errors for auto-messages
     } finally {
       setIsThinking(false);
     }
@@ -316,6 +425,26 @@ export default function Home() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
+  // Idle detection: auto-message after 15-20s of silence
+  useEffect(() => {
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    if (isThinking || isLoading || showMenu || consecutiveAutoMsgs >= 3) return;
+
+    const delay = 15000 + Math.random() * 5000; // 15-20s
+    idleTimerRef.current = setTimeout(() => {
+      sendAutoMessage();
+    }, delay);
+
+    return () => {
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    };
+  }, [chatHistory, isThinking, isLoading, showMenu, consecutiveAutoMsgs]);
+
+  // Auto-scroll to bottom on new messages or thinking
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatHistory, isThinking]);
+
   const playAudio = (base64Audio: string) => {
     try {
       console.log("🔊 Attempting to play audio...");
@@ -423,6 +552,7 @@ export default function Home() {
     if (!input.trim() || isThinking) return;
     const userInput = input;
     setInput("");
+    setConsecutiveAutoMsgs(0);
     await sendChatMessage(userInput);
   };
 
@@ -475,7 +605,7 @@ export default function Home() {
             <div className="model-wrapper" style={{
               transform: `translateX(${mousePos.x * 20}px)`
             }}>
-              <ModelCanvas emotion={currentEmotion} model={modelName} />
+              <ModelCanvas emotion={currentEmotion} model={modelName} affection={affection} motion={pendingMotion} />
             </div>
           </>
         ) : (
@@ -496,7 +626,7 @@ export default function Home() {
             <div className="model-wrapper cafe-model" style={{
               transform: `translateX(${mousePos.x * 15}px)`
             }}>
-              <ModelCanvas emotion={currentEmotion} model={modelName} />
+              <ModelCanvas emotion={currentEmotion} model={modelName} affection={affection} motion={pendingMotion} />
             </div>
             
             {/* Table Layer - In front of model */}
@@ -617,13 +747,13 @@ export default function Home() {
               <p>
                 {modelName === "arisa" ? (
                   <>
-                    Oh... um, hi there~ <br/>
-                    I didn't think you'd show up today... <br/>
+                    oh... um hey~ <br/>
+                    i didnt think youd show up today... <br/>
                   </>
                 ) : (
                   <>
-                    Hey there~ <br/>
-                    Didn't think I'll get to see you today <br/>
+                    hey there~ <br/>
+                    didnt think id get to see you today <br/>
                   </>
                 )}
               </p>
@@ -641,10 +771,14 @@ export default function Home() {
           {isThinking && (
             <div className="message-wrapper ai">
               <div className="message-bubble thinking">
-                ...
+                <span className="typing-dot" />
+                <span className="typing-dot" />
+                <span className="typing-dot" />
               </div>
             </div>
           )}
+
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Input Area */}
