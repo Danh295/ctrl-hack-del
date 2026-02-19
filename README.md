@@ -2,6 +2,8 @@
 
 A web-based dating simulator featuring an interactive Live2D character that converses using AI-generated dialogue (Gemini API) and realistic voice synthesis (ElevenLabs API) with real-time lip synchronization.
 
+>_Winner of Best Valentine's Day Hack @ Ctrl-Hack-Del 2.0 🎊_
+
 ## Features
 
 - **Interactive Character Model** - High-fidelity 2D characters running on the **Cubism SDK** math & physics engine, rendered via **PixiJS** (WebGL).
