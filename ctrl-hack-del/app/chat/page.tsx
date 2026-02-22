@@ -4,6 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Send, Mic, Volume2, VolumeX, Heart, ArrowLeft } from "lucide-react";
 import Receipt from "@/components/Receipt";
+import { useToast } from "@/components/ToastProvider"; 
 
 // Import Canvas with NO SSR
 const ModelCanvas = dynamic(() => import("@/components/ModelCanvas"), {
@@ -79,35 +80,28 @@ function getRelationshipStage(affection: number) {
 export default function Home() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const modelName = searchParams.get("model") || "arisa"; // Default to arisa
+  const modelName = searchParams.get("model") || "arisa"; 
+  const { addToast } = useToast(); // <-- Initialize Toast Hook
   
   // Affection system constants
-  const AFFECTION_BASE_CHANGE = 20; // Base amount for changes
-  const CAFE_DATE_THRESHOLD = 50; // Threshold to unlock cafe date
+  const AFFECTION_BASE_CHANGE = 20; 
+  const CAFE_DATE_THRESHOLD = 50; 
   
   // Emotion multipliers differ by character
   const ARISA_EMOTION_MULTIPLIERS: Record<string, number> = {
-    "Smile": 3,      // Happy: +3x
-    "Surprised": 2,  // Surprised: +2x
-    "Normal": 0.5,   // Normal: small positive nudge
-    "Sad": -0.5,     // Sad: -0.5x
-    "Angry": -2      // Angry: -2x
+    "Smile": 3, "Surprised": 2, "Normal": 0.5, "Sad": -0.5, "Angry": -2
   };
 
   const CHITOSE_EMOTION_MULTIPLIERS: Record<string, number> = {
-    "Smile": 3,      // Happy: +3x
-    "Surprised": 2,  // Surprised: +2x
-    "Normal": 1,     // Default calm expression: +1x (gradual growth)
-    "Sad": -0.5,     // Sad: -0.5x
-    "Angry": -1,     // Angry: -1x
-    "Blushing": 3,   // Blushing: +3x (special chitose emotion)
-    "Nervous": 2     // Nervous/flustered: +2x
+    "Smile": 3, "Surprised": 2, "Normal": 1, "Sad": -0.5, "Angry": -1,
+    "Blushing": 3, "Nervous": 2
   };
 
   const EMOTION_MULTIPLIERS = modelName === "chitose" 
     ? CHITOSE_EMOTION_MULTIPLIERS 
     : ARISA_EMOTION_MULTIPLIERS;
 
+  const [currentAudioUrl, setCurrentAudioUrl] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [chatHistory, setChatHistory] = useState<Message[]>([]);
   const [currentEmotion, setCurrentEmotion] = useState("Normal");
@@ -117,36 +111,32 @@ export default function Home() {
   const [isCafeDate, setIsCafeDate] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
-  const [affection, setAffection] = useState(40); // Affection level (0-100)
+  const [affection, setAffection] = useState(40); 
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptTimestamp, setReceiptTimestamp] = useState<Date>(new Date());
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
-  // Milestone & relationship state
   const [shownMilestones, setShownMilestones] = useState<number[]>([]);
   const [activeMilestone, setActiveMilestone] = useState<Milestone | null>(null);
   const [holdingHands, setHoldingHands] = useState(false);
   const stage = getRelationshipStage(affection);
 
-  // Auto-message / idle detection state
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [consecutiveAutoMsgs, setConsecutiveAutoMsgs] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  // Motion state for Live2D model
   const [pendingMotion, setPendingMotion] = useState<string | null>(null);
 
-  // Menu system state
   const [currency, setCurrency] = useState(50);
   const [orderedItems, setOrderedItems] = useState<string[]>([]);
   const [showMenu, setShowMenu] = useState(false);
   const [menuTab, setMenuTab] = useState("Coffee");
 
-  // Memoize heart positions so they don't jump on re-render
+  // Memoize heart positions
   const heartStyles = useMemo(() =>
     Array.from({ length: 12 }).map(() => ({
       left: `${Math.random() * 100}%`,
@@ -156,33 +146,54 @@ export default function Home() {
     })),
   []);
 
-  // Affection-based expression override: ensures the model's face
-  // matches the relationship level even if the AI picks an off-tone expression
-  const getEffectiveExpression = (expression: string, aff: number): string => {
-    // Very low affection: force negative expressions
-    if (aff < 15) {
-      if (["Smile", "Blushing", "Nervous", "Surprised"].includes(expression)) {
-        return Math.random() < 0.6 ? "Angry" : "Sad";
+  // --- NEW: Check API Status on Load ---
+  useEffect(() => {
+    const checkApiStatus = async () => {
+      try {
+        const res = await fetch('/api/status');
+        if (!res.ok) return;
+        const data = await res.json();
+
+        // 1. Check Gemini
+        if (!data.gemini?.ok) {
+          addToast("⚠️ Gemini API Key is missing. The bot will not respond.", "error");
+        }
+
+        // 2. Check ElevenLabs
+        if (!data.elevenLabs?.ok && data.elevenLabs?.error === "Out of characters") {
+          addToast("🎙️ Voice disabled: ElevenLabs free tier character limit reached.", "error");
+          setIsAudioEnabled(false); 
+        } else if (!data.elevenLabs?.ok) {
+           addToast("⚠️ Voice disabled: ElevenLabs API Key is missing or invalid.", "error");
+           setIsAudioEnabled(false);
+        } else if (data.elevenLabs?.remaining < 1000) {
+          addToast(`⚠️ Running low on voice credits (${data.elevenLabs.remaining} chars left)`, "info");
+        }
+      } catch (error) {
+        console.error("Failed to check API status", error);
       }
+    };
+
+    checkApiStatus();
+  }, [addToast]);
+
+  const getEffectiveExpression = (expression: string, aff: number): string => {
+    if (aff < 15) {
+      if (["Smile", "Blushing", "Nervous", "Surprised"].includes(expression)) return Math.random() < 0.6 ? "Angry" : "Sad";
       if (expression === "Normal") return Math.random() < 0.4 ? "Sad" : "Normal";
       return expression;
     }
-    // Low affection: suppress positive expressions
     if (aff < 30) {
       if (["Smile", "Blushing", "Nervous"].includes(expression)) return "Normal";
       return expression;
     }
-    // Medium-low: block blushing/nervous, allow smile
     if (aff < 50) {
       if (["Blushing", "Nervous"].includes(expression)) return "Normal";
       return expression;
     }
-    // High affection: boost positive expressions
     if (aff >= 85) {
       if (expression === "Normal") return Math.random() < 0.6 ? "Smile" : "Normal";
-      if (expression === "Smile" && modelName === "chitose") {
-        return Math.random() < 0.35 ? "Blushing" : "Smile";
-      }
+      if (expression === "Smile" && modelName === "chitose") return Math.random() < 0.35 ? "Blushing" : "Smile";
       return expression;
     }
     if (aff >= 70) {
@@ -190,6 +201,23 @@ export default function Home() {
       return expression;
     }
     return expression;
+  };
+
+  // Process Audio for Canvas (Replaces old playAudio)
+  const processAudio = (base64Audio: string) => {
+    try {
+      const byteCharacters = atob(base64Audio);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: "audio/mpeg" });
+      const audioUrl = URL.createObjectURL(blob);
+      setCurrentAudioUrl(audioUrl); // Pass to Canvas to trigger lip sync
+    } catch (e) {
+      console.error("Audio conversion failed", e);
+    }
   };
 
   const sendChatMessage = async (messageText: string) => {
@@ -210,8 +238,18 @@ export default function Home() {
       });
 
       const data = await res.json();
+      
+      // --- NEW: Handle Errors & Toasts ---
       if (!res.ok) {
-        throw new Error(data?.error || "Failed to fetch response");
+        const errorMsg = data?.error || "Failed to fetch response";
+        if (res.status === 429 || errorMsg.includes("429") || errorMsg.includes("quota")) {
+          addToast("⚠️ API Limit Reached: Please try again later or check your billing.", "error");
+        } else if (res.status === 500) {
+          addToast("❌ Server Error: Check your API Keys in .env.local", "error");
+        } else {
+          addToast(`Error: ${errorMsg}`, "error");
+        }
+        throw new Error(errorMsg);
       }
 
       const replyText = data?.reply || "(No response)";
@@ -224,13 +262,11 @@ export default function Home() {
       setChatHistory((prev) => [...prev, { role: "ai", text: replyText, emotion: effectiveExpression }]);
       setCurrentEmotion(effectiveExpression);
 
-      // Trigger motion if returned
       if (motionTag && motionTag !== "none") {
         setPendingMotion(motionTag);
         setTimeout(() => setPendingMotion(null), 2000);
       }
 
-      // Use AI-determined affection change if available, otherwise fall back to multiplier
       if (typeof aiAffectionChange === "number" && aiAffectionChange !== 0) {
         const handsBonus = holdingHands ? 1.5 : 1;
         setAffection((prev) => Math.max(0, Math.min(100, prev + aiAffectionChange * handsBonus)));
@@ -244,15 +280,18 @@ export default function Home() {
       }
 
       if (audioBase64 && isAudioEnabled) {
-        playAudio(audioBase64);
+        processAudio(audioBase64);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      if (!error.message?.includes("429") && !error.message?.includes("Server Error")) {
+         addToast("Network Error: Could not connect to AI.", "error");
+      }
       setChatHistory((prev) => [
         ...prev,
-        { role: "ai", text: "⚠️ Gemini is unavailable. Check your API key and try again." },
+        { role: "ai", text: "⚠️ Connection failed. (Check notifications)" },
       ]);
-      setCurrentEmotion("Normal");
+      setCurrentEmotion("Sad");
     } finally {
       setIsThinking(false);
     }
@@ -286,7 +325,6 @@ export default function Home() {
       setCurrentEmotion(effectiveExpression);
       setConsecutiveAutoMsgs((prev) => prev + 1);
 
-      // Trigger motion if returned
       if (motionTag && motionTag !== "none") {
         setPendingMotion(motionTag);
         setTimeout(() => setPendingMotion(null), 2000);
@@ -305,7 +343,7 @@ export default function Home() {
       }
 
       if (audioBase64 && isAudioEnabled) {
-        playAudio(audioBase64);
+        processAudio(audioBase64);
       }
     } catch {
       // Silently swallow errors for auto-messages
@@ -320,7 +358,6 @@ export default function Home() {
   }, 0);
   const availableBalance = currency - orderTotal;
 
-  // Current drink/food on the table
   const currentDrink = orderedItems.find((name) => {
     const m = MENU_ITEMS.find((i) => i.name === name);
     return m && DRINK_CATEGORIES.includes(m.category);
@@ -358,29 +395,24 @@ export default function Home() {
     sendChatMessage(`I just ordered ${item.name} for us!`);
   };
 
-  // Initial loading screen
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1500);
     return () => clearTimeout(timer);
   }, []);
 
-  // Loading screen when switching backgrounds
   useEffect(() => {
-    if (isLoading) return; // Skip on initial load
+    if (isLoading) return; 
     setIsLoading(true);
     const timer = setTimeout(() => setIsLoading(false), 1500);
     return () => clearTimeout(timer);
   }, [isCafeDate]);
 
-  // Milestone detection
   useEffect(() => {
     for (const milestone of MILESTONES) {
       if (affection >= milestone.threshold && !shownMilestones.includes(milestone.threshold)) {
         setShownMilestones((prev) => [...prev, milestone.threshold]);
         setActiveMilestone(milestone);
-        // Auto-dismiss after 4 seconds
         const timer = setTimeout(() => setActiveMilestone(null), 4000);
-        // Trigger confession at 75
         if (milestone.threshold === 75) {
           const confessionName = modelName === "arisa" ? "Arisa" : "Chitose";
           setTimeout(() => {
@@ -392,24 +424,16 @@ export default function Home() {
     }
   }, [affection]);
 
-  // Detect time of day
   useEffect(() => {
     const updateTimeOfDay = () => {
       const hour = new Date().getHours();
-      
-      if (hour >= 5 && hour < 12) {
-        setTimeOfDay("morning");
-      } else if (hour >= 12 && hour < 17) {
-        setTimeOfDay("afternoon");
-      } else if (hour >= 17 && hour < 20) {
-        setTimeOfDay("evening");
-      } else {
-        setTimeOfDay("night");
-      }
+      if (hour >= 5 && hour < 12) setTimeOfDay("morning");
+      else if (hour >= 12 && hour < 17) setTimeOfDay("afternoon");
+      else if (hour >= 17 && hour < 20) setTimeOfDay("evening");
+      else setTimeOfDay("night");
     };
 
     updateTimeOfDay();
-    // Update every minute
     const interval = setInterval(updateTimeOfDay, 60000);
     return () => clearInterval(interval);
   }, []);
@@ -425,22 +449,17 @@ export default function Home() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  // Idle detection: auto-message after silence
-  // - 5-8s after a user message
-  // - 20s after an auto-message (wait for user to reply)
-  // - Suppressed entirely while the user is typing
   const isUserTyping = input.trim().length > 0;
 
   useEffect(() => {
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     if (isThinking || isLoading || showMenu || consecutiveAutoMsgs >= 3 || isUserTyping) return;
 
-    // If the last message was from the AI (auto-message streak), use a longer delay
     const lastMsg = chatHistory[chatHistory.length - 1];
     const lastWasAuto = lastMsg?.role === "ai" && consecutiveAutoMsgs > 0;
     const delay = lastWasAuto
-      ? 20000 + Math.random() * 5000  // 20-25s after an auto-message
-      : 15000 + Math.random() * 5000;  // 5-8s after a user message
+      ? 20000 + Math.random() * 5000  
+      : 15000 + Math.random() * 5000;  
 
     idleTimerRef.current = setTimeout(() => {
       sendAutoMessage();
@@ -451,42 +470,9 @@ export default function Home() {
     };
   }, [chatHistory, isThinking, isLoading, showMenu, consecutiveAutoMsgs, isUserTyping]);
 
-  // Auto-scroll to bottom on new messages or thinking
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory, isThinking]);
-
-  const playAudio = (base64Audio: string) => {
-    try {
-      console.log("Attempting to play audio...");
-      
-      // Stop current audio if playing
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-      }
-
-      // Create new audio element
-      const audio = new Audio(`data:audio/mpeg;base64,${base64Audio}`);
-      audio.volume = 1.0; // Set to maximum volume
-      audioRef.current = audio;
-      
-      audio.addEventListener('loadeddata', () => {
-        console.log("Audio loaded successfully");
-      });
-      
-      audio.addEventListener('playing', () => {
-        console.log("Audio is playing");
-      });
-      
-      audio.play().catch(err => {
-        console.error("Audio playback failed:", err);
-        alert("Audio playback failed. Please click anywhere on the page first to enable audio.");
-      });
-    } catch (error) {
-      console.error("Audio creation failed:", error);
-    }
-  };
 
   const startRecording = async () => {
     try {
@@ -507,8 +493,6 @@ export default function Home() {
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         await transcribeAudio(audioBlob);
-        
-        // Stop all tracks to release the microphone
         stream.getTracks().forEach(track => track.stop());
       };
       
@@ -516,7 +500,7 @@ export default function Home() {
       setIsRecording(true);
     } catch (error) {
       console.error("Error accessing microphone:", error);
-      alert("Could not access microphone. Please ensure you've granted permission.");
+      addToast("Could not access microphone. Please check your permissions.", "error");
     }
   };
   
@@ -545,15 +529,14 @@ export default function Home() {
       }
       
       const data = await response.json();
-      console.log("Transcription result:", data);
       if (data.text) {
         setInput(data.text);
       } else {
         console.warn("No text in transcription response");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Transcription error:", error);
-      alert(`Failed to transcribe audio: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      addToast(`Failed to transcribe audio: ${error.message || 'Unknown error'}`, "error");
     } finally {
       setIsTranscribing(false);
     }
@@ -569,14 +552,12 @@ export default function Home() {
 
   return (
     <main className="chat-container">
-      {/* Loading Screen */}
       {isLoading && (
         <div className="loading-screen">
           <p className="loading-text">travelling...</p>
         </div>
       )}
       
-      {/* Back Button */}
       <button className="chat-back-button" onClick={() => {
         if (isCafeDate) {
           setReceiptTimestamp(new Date());
@@ -588,67 +569,25 @@ export default function Home() {
         <ArrowLeft size={16} />
       </button>
 
-
-      {/* LEFT COLUMN: ARISA MODEL WITH PARALLAX (65% Width) */}
       <section className="model-section">
         {!isCafeDate ? (
           <>
-            {/* BACKGROUND 1: Outdoor Scene */}
-            {/* Sky Layer - Deepest */}
-            <div 
-              className={`parallax-layer sky-layer sky-${timeOfDay}`}
-            />
-            
-            {/* House Layer */}
-            <div 
-              className="parallax-layer house-layer"
-            />
-            
-            {/* Bush Layer */}
-            <div 
-              className="parallax-layer bush-layer"
-              style={{
-                transform: `translateX(${mousePos.x * 8}px)`
-              }}
-            />
-            
-            {/* The Model - Above all layers */}
-            <div className="model-wrapper" style={{
-              transform: `translateX(${mousePos.x * 20}px)`
-            }}>
-              <ModelCanvas emotion={currentEmotion} model={modelName} affection={affection} motion={pendingMotion} />
+            <div className={`parallax-layer sky-layer sky-${timeOfDay}`} />
+            <div className="parallax-layer house-layer" />
+            <div className="parallax-layer bush-layer" style={{ transform: `translateX(${mousePos.x * 8}px)` }} />
+            <div className="model-wrapper" style={{ transform: `translateX(${mousePos.x * 20}px)` }}>
+              <ModelCanvas emotion={currentEmotion} model={modelName} affection={affection} motion={pendingMotion} audioSrc={currentAudioUrl} />
             </div>
           </>
         ) : (
           <>
-            {/* BACKGROUND 2: Cafe Scene */}
-            {/* Cafe Background - Static at the very back */}
             <div className="parallax-layer cafe-background" />
-            
-            {/* Chair Layer - Behind model */}
-            <div 
-              className="parallax-layer chair-layer"
-              style={{
-                transform: `translateX(${mousePos.x * 10}px)`
-              }}
-            />
-            
-            {/* The Model - Smaller size for cafe */}
-            <div className="model-wrapper cafe-model" style={{
-              transform: `translateX(${mousePos.x * 15}px)`
-            }}>
-              <ModelCanvas emotion={currentEmotion} model={modelName} affection={affection} motion={pendingMotion} />
+            <div className="parallax-layer chair-layer" style={{ transform: `translateX(${mousePos.x * 10}px)` }} />
+            <div className="model-wrapper cafe-model" style={{ transform: `translateX(${mousePos.x * 15}px)` }}>
+              <ModelCanvas emotion={currentEmotion} model={modelName} affection={affection} motion={pendingMotion} audioSrc={currentAudioUrl} />
             </div>
-            
-            {/* Table Layer - In front of model */}
-            <div
-              className="parallax-layer table-layer"
-              style={{
-                transform: `translateX(${mousePos.x * 4}px)`
-              }}
-            />
+            <div className="parallax-layer table-layer" style={{ transform: `translateX(${mousePos.x * 4}px)` }} />
 
-            {/* Ordered items on table */}
             {orderedItems.length > 0 && (
               <div className="table-items" style={{ transform: `translateX(${mousePos.x * 4}px)` }}>
                 {orderedItems.map((name, i) => {
@@ -667,7 +606,6 @@ export default function Home() {
         <div className={`warmth-vignette ${holdingHands ? "active" : ""}`} />
       </section>
 
-      {/* AFFECTION METER */}
       <div className="affection-meter-container">
         <div className="affection-meter-label">
           <Heart size={14} fill="var(--soft-berry)" color="var(--soft-berry)" />
@@ -682,7 +620,6 @@ export default function Home() {
               <div className="affection-meter-shine" />
             </div>
           </div>
-          {/* Milestone tick marks */}
           {MILESTONES.map((m) => (
             <div
               key={m.threshold}
@@ -695,10 +632,7 @@ export default function Home() {
         <span className="stage-label">{stage.name}</span>
       </div>
 
-      {/* RIGHT COLUMN: CHAT INTERFACE (35% Width) */}
       <section className="chat-section">
-        
-        {/* Header */}
         <div className="chat-header">
           <div className="chat-header-top">
             <div className="chat-header-content">
@@ -751,7 +685,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Chat Area */}
         <div className="chat-messages">
           {chatHistory.length === 0 && (
             <div className="empty-chat">
@@ -792,7 +725,6 @@ export default function Home() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Area */}
         <div className="chat-input-area">
           <div className="input-wrapper">
             <button 
@@ -819,7 +751,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Milestone Popup */}
       {activeMilestone && (
         <div className="milestone-popup" onClick={() => setActiveMilestone(null)}>
           <span className="milestone-icon">{activeMilestone.icon}</span>
@@ -828,7 +759,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Soulmates Hearts */}
       {affection >= 100 && (
         <div className="soulmates-hearts">
           {heartStyles.map((style, i) => (
@@ -837,11 +767,9 @@ export default function Home() {
         </div>
       )}
 
-      {/* Menu Modal */}
       {showMenu && (
         <div className="menu-overlay" onClick={() => setShowMenu(false)}>
           <div className="menu-panel" onClick={(e) => e.stopPropagation()}>
-            {/* Order header */}
             <div className="menu-header">
               <div className="menu-header-text">
                 <h2 className="menu-title">Place an Order</h2>
@@ -850,13 +778,11 @@ export default function Home() {
               <button className="menu-close" onClick={() => setShowMenu(false)}>✕</button>
             </div>
 
-            {/* Currency display */}
             <div className="menu-currency">
               <span className="menu-currency-label">Available to spend</span>
               <span className="menu-currency-value">${availableBalance}</span>
             </div>
 
-            {/* Tab navigation */}
             <div className="menu-tabs">
               {MENU_CATEGORIES.map((cat) => (
                 <button
@@ -869,7 +795,6 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Item grid */}
             <div className="menu-items">
               {MENU_ITEMS.filter((item) => item.category === menuTab).map((item) => {
                 const isOrdered = orderedItems.includes(item.name);
@@ -905,7 +830,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Receipt Modal */}
       {showReceipt && (
         <Receipt
           modelName={modelName}
