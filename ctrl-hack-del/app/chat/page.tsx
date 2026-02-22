@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Send, Mic, Volume2, VolumeX, Heart, ArrowLeft } from "lucide-react";
@@ -77,7 +77,7 @@ function getRelationshipStage(affection: number) {
   return { name: "Strangers", tier: 0 };
 }
 
-export default function Home() {
+function ChatContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const modelName = searchParams.get("model") || "arisa"; 
@@ -848,5 +848,18 @@ export default function Home() {
       )}
 
     </main>
+  );
+}
+
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={
+      <div className="loading-screen">
+        <p className="loading-text">loading...</p>
+      </div>
+    }>
+      <ChatContent />
+    </Suspense>
   );
 }
